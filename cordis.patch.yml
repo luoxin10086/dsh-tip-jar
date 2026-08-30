@@ -16,5 +16,5 @@
           - 'sponsors.json'
           - 'D:/tool/claude_code/sponsors.json'
         statsFiles:
-          - '.tip-jar-stats.json'
           - 'D:/tool/claude_code/.tip-jar-stats.json'
+          - '.tip-jar-stats.json'
