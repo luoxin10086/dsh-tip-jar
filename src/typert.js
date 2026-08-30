@@ -35,6 +35,16 @@ const TYPERT = {
             name: 'saveTipStats',
             signature: 'async saveTipStats(request: TipJarSaveTipStatsRequest): Promise<TipJarSaveTipStatsResult>',
           },
+          {
+            kind: 'method',
+            name: 'reportContributor',
+            signature: 'async reportContributor(request: TipJarReportContributorRequest): Promise<TipJarReportContributorResult>',
+          },
+          {
+            kind: 'method',
+            name: 'disputed',
+            signature: 'async disputed(request: TipJarDisputedRequest): Promise<TipJarDisputedResult>',
+          },
         ],
         types: [
           {
@@ -60,6 +70,22 @@ const TYPERT = {
           {
             name: 'TipJarSaveTipStatsResult',
             declaration: 'export type TipJarSaveTipStatsResult = TipJarResult<{ saved: boolean }>',
+          },
+          {
+            name: 'TipJarReportContributorRequest',
+            declaration: 'export interface TipJarReportContributorRequest { readonly targetId: string; readonly category: "fake" | "copycat" | "phishing" | "paidwall" | "other"; readonly anonId: string; readonly note?: string }',
+          },
+          {
+            name: 'TipJarReportContributorResult',
+            declaration: 'export type TipJarReportContributorResult = TipJarResult<{ received: boolean }>',
+          },
+          {
+            name: 'TipJarDisputedRequest',
+            declaration: 'export interface TipJarDisputedRequest {}',
+          },
+          {
+            name: 'TipJarDisputedResult',
+            declaration: 'export type TipJarDisputedResult = TipJarResult<{ disputed: Record<string, Record<string, number>> }>',
           },
         ],
       },

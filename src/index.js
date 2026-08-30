@@ -3,15 +3,20 @@
 import { Service } from '@deepseek-ai/cordis'
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { validateRegistry } from './validate.js'
+import { computeDisputed } from './reports.js'
 
 // 默认查找工作区根目录的 sponsors.json；可通过插件配置 config.roots 覆盖
 const DEFAULT_ROOTS = ['sponsors.json']
 // 链上统计持久化文件候选（部署本地路径由 row config 补充）
 const DEFAULT_STATS_FILES = ['.tip-jar-stats.json']
+// 举报记录持久化文件候选
+const DEFAULT_REPORTS_FILES = ['report.jsonl']
 
 function fail(code, message) {
   return { code, message }
 }
+
+const REPORT_CATEGORIES = ['fake', 'copycat', 'phishing', 'paidwall', 'other']
 
 class TipJarService extends TypertRemoteService {
   static inject = ['fs']
@@ -21,6 +26,7 @@ class TipJarService extends TypertRemoteService {
     this.config = {
       roots: DEFAULT_ROOTS,
       statsFiles: DEFAULT_STATS_FILES,
+      reportsFiles: DEFAULT_REPORTS_FILES,
       ...config,
     }
   }
@@ -84,6 +90,69 @@ class TipJarService extends TypertRemoteService {
     if (!fs) throw new Error('fs 服务不可用')
     const target = await fs.resolve(this.config.statsFiles[0], {})
     await fs.writeText(target, JSON.stringify(stats))
+  }
+
+  async reportContributor(request) {
+    const targetId = request && request.targetId
+    const category = request && request.category
+    const anonId = request && request.anonId
+    if (!targetId || !category || !anonId) {
+      return { ok: false, error: fail('tip-jar-bad-report', 'targetId/category/anonId 必填') }
+    }
+    if (REPORT_CATEGORIES.indexOf(category) === -1) {
+      return { ok: false, error: fail('tip-jar-bad-report', '未知举报分类: ' + category) }
+    }
+    const record = {
+      ts: Date.now(),
+      targetId: String(targetId),
+      category: String(category),
+      anonId: String(anonId),
+      note: request.note ? String(request.note).slice(0, 500) : '',
+    }
+    try {
+      await this.appendReport(record)
+      return { ok: true, value: { received: true } }
+    } catch (error) {
+      return { ok: false, error: fail('tip-jar-report-write-failed', error && error.message ? error.message : String(error)) }
+    }
+  }
+
+  async disputed() {
+    try {
+      const reports = await this.readReports()
+      const disputed = computeDisputed(reports)
+      return { ok: true, value: { disputed } }
+    } catch (error) {
+      return { ok: false, error: fail('tip-jar-disputed-failed', error && error.message ? error.message : String(error)) }
+    }
+  }
+
+  async readReports() {
+    const fs = this.ctx.fs
+    if (!fs) return []
+    for (const f of this.config.reportsFiles) {
+      try {
+        const target = await fs.resolve(f, {})
+        const text = await fs.readText(target)
+        const out = []
+        for (const line of text.split(/\r?\n/)) {
+          const l = line.trim()
+          if (!l) continue
+          try { out.push(JSON.parse(l)) } catch (e) { /* skip bad line */ }
+        }
+        return out
+      } catch (e) { /* try next candidate */ }
+    }
+    return []
+  }
+
+  async appendReport(record) {
+    const fs = this.ctx.fs
+    if (!fs) throw new Error('fs 服务不可用')
+    const target = await fs.resolve(this.config.reportsFiles[0], {})
+    const existing = await this.readReports()
+    existing.push(record)
+    await fs.writeText(target, existing.map(function (r) { return JSON.stringify(r) }).join('\n'))
   }
 
   async loadRegistry() {
