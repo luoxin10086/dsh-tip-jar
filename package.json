@@ -33,7 +33,8 @@
     "ETHICS.md",
     "ECOSYSTEM-RISKS.md",
     "LICENSE",
-    "sponsors.example.json"
+    "sponsors.example.json",
+    "QUICKSTART.md"
   ],
   "dsh": {
     "bundle": {
