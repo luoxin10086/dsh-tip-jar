@@ -59,7 +59,21 @@ function fakeFs() {
   check('report 内容完整', parsed && parsed.targetId === 't' && parsed.anonId === 'dev1' && parsed.category === 'fake', JSON.stringify(parsed))
 }
 
-// 3. 全部候选被拒 → 返回明确错误（不崩溃）
+// 4. 读-写候选分叉：候选1可读（含旧记录）但不可写，候选2可写
+//    → append 写候选2；readReports 必须合并两个候选（不丢旧记录）
+{
+  const { fs, writes, files } = fakeFs()
+  files['DENY:c.jsonl'] = JSON.stringify({ targetId: 'old', category: 'fake', anonId: 'dev0', ts: 1 })
+  const ctx = new Context()
+  ctx.fs = fs
+  const svc = new TipJarService(ctx, { reportsFiles: ['DENY:c.jsonl', 'OK:d.jsonl'] })
+  const r = await svc.reportContributor({ targetId: 'new', category: 'fake', anonId: 'dev9', note: '' })
+  check('分叉时 append 仍成功', r.ok === true && r.value && r.value.received === true, JSON.stringify(r))
+  const all = await svc.readReports()
+  check('readReports 合并两个候选（旧+新）', all.length === 2 && all.some(function (x) { return x.targetId === 'old' }) && all.some(function (x) { return x.targetId === 'new' }), JSON.stringify(all))
+}
+
+// 5. 全部候选被拒 → 返回明确错误（不崩溃）
 {
   const { fs } = fakeFs()
   const ctx = new Context()

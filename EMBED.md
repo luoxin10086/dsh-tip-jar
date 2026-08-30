@@ -18,12 +18,13 @@ dsh-tip-jar 除了独立赞助面板（「支持」Tab / 设置页），还提�
 
 ## 接入方式（一行）
 
-在你的插件 Client 代码里，声明自己的 slot 并渲染组件：
+在你的插件 Client 代码里，**在自己的构建中引入** `dsh-tip-jar/embed`（纯 ESM、无副作用），
+并渲染组件：
 
 ```js
-// 你的插件（client 半）
+// 你的插件（client 半，自己的 esbuild 构建）
 import { createElement } from 'react'
-import { TipJarEmbed } from 'dsh-tip-jar/client'
+import { TipJarEmbed } from 'dsh-tip-jar/embed'
 
 // 在你的某个 slot（如会话标题栏动作、工具卡、你自己的面板）里：
 slots.inject('conversation.session.header.actions', function () {
@@ -35,19 +36,25 @@ slots.inject('conversation.session.header.actions', function () {
 ```
 
 只需两步：
-1. `import { TipJarEmbed } from 'dsh-tip-jar/client'`
+1. `import { TipJarEmbed } from 'dsh-tip-jar/embed'`（你的构建把该 ESM 打包进自己的 bundle，`react` 保持 external）
 2. 在你的 slot 渲染 `<TipJarEmbed ctx={你的ctx} pluginId="你的插件id" />`
 
 `pluginId` 必须在 `sponsors.json` 的 `plugins[]` 中登记（并指向 `contributors[]`）。
+
+> ⚠️ **为什么用 `/embed` 而不是 `/client`**：dsh 平台禁止插件之间在**运行时**互相导入对方
+> client 模块的导出（ModuleLoader 的 factory 返回即导出，跨包 value import 是平台级构建错误）。
+> `dsh-tip-jar/client` 是给 dsh-tip-jar 自己用的 ModuleLoader bundle；
+> 给**其他插件**用的干净入口是 `dsh-tip-jar/embed` —— 纯 ESM 组件模块，在你的构建时打包进去。
 
 ## 依赖与限制（诚实说明）
 
 | 项 | 说明 |
 |----|------|
-| 依赖 | 目标机器须已安装 dsh-tip-jar（`dsh plugin add dsh-tip-jar`） |
-| 跨包导入 | 当前 Client 模块加载器对"插件 A 导入插件 B 的 client 导出"支持有限；若你的构建直接打包 dsh-tip-jar/client.js 源码（含 React 依赖），请确保 React external（见 README 构建说明） |
+| 依赖 | 目标机器须已安装并运行 dsh-tip-jar（提供 Remote 命名空间 + CSS；`dsh plugin add dsh-tip-jar`） |
+| 打包 | 用 `dsh-tip-jar/embed`（ESM）；你自己的构建负责打包它，`react` 保持 external（与 dsh 插件构建惯例一致） |
 | 数据源 | 组件通过 dsh-tip-jar 的 Remote 命名空间读取（全局可用），无需你的插件额外接线 |
-| 未安装时 | 组件不渲染（你的 slot 里无内容），不影响你的插件功能 |
+| 未安装时 | 组件渲染降级提示（"tipJar Remote 未挂载"），不影响你的插件功能 |
+| 纯函数 | 也可只 import `resolveEmbed(sponsors, pluginId, stats)` 自己拼 UI |
 
 ## 注册表登记示例
 

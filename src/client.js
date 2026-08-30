@@ -4,6 +4,7 @@
 import { createElement, useState, useEffect, useRef } from 'react'
 import { TYPERT_REMOTE } from './remote.js'
 import { buildGetLogsRequest, parseTransferLogs, aggregateStats, mergeStats, formatUsdc } from './onchain.js'
+import { TipJarEmbed, ReportButton, createTipJarApi } from './embed.js'
 
 // 链上到账雷达配置（浏览器友好公共 RPC，按序回退；原生 USDC 合约）
 const RPC_URLS = [
@@ -29,98 +30,6 @@ async function rpcCall(method, params) {
     } catch (e) { lastErr = e }
   }
   throw lastErr || new Error('rpc unavailable')
-}
-
-// ── Remote API ──────────────────────────────────────────────────────────────
-
-class TipJarApiError extends Error {
-  constructor(code, message) {
-    super(message)
-    this.code = code
-  }
-}
-
-class TipJarApi {
-  /** @param {() => object|undefined} getNamespace live namespace getter */
-  constructor(getNamespace) {
-    this.getNamespace = getNamespace
-  }
-
-  async call(method, args) {
-    const namespace = this.getNamespace()
-    const fn = namespace && namespace[method]
-    if (typeof fn !== 'function') {
-      throw new TipJarApiError('not-mounted', 'tipJar Remote method "' + method + '" is not mounted')
-    }
-    const rpc = await fn(args)
-    if (!rpc.ok) {
-      throw new TipJarApiError('rpc-failed', (rpc.error && rpc.error.message) || 'remote call failed')
-    }
-    const business = rpc.value
-    if (!business.ok) {
-      throw new TipJarApiError('rpc-failed', (business.error && business.error.message) || 'remote call failed')
-    }
-    return business.value
-  }
-
-  async listSponsors() {
-    // business.value = 注册表加载结果 {ok, errors, data}
-    const result = await this.call('listSponsors', {})
-    if (result.ok) return result.data
-    throw new TipJarApiError('registry-invalid', (result.errors && result.errors.length) ? result.errors.join('; ') : 'registry load failed')
-  }
-
-  tipStats() {
-    // business.value = {stats, present}
-    return this.call('tipStats', {})
-  }
-
-  saveTipStats(stats) {
-    // business.value = {saved}
-    return this.call('saveTipStats', { stats })
-  }
-
-  reportContributor(targetId, category, anonId, note) {
-    // business.value = {received}
-    return this.call('reportContributor', { targetId, category, anonId, note })
-  }
-
-  disputed() {
-    // business.value = {disputed}
-    return this.call('disputed', {})
-  }
-}
-
-// 设备匿名编号：同一设备同一编号（防同一人反复刷举报）
-function getAnonId() {
-  try {
-    const key = 'dsh-tip-jar-anon'
-    let id = window.localStorage.getItem(key)
-    if (!id) {
-      id = Math.random().toString(36).slice(2) + Date.now().toString(36)
-      window.localStorage.setItem(key, id)
-    }
-    return id
-  } catch (e) {
-    return Math.random().toString(36).slice(2)
-  }
-}
-
-const REPORT_CATEGORIES = [
-  { value: 'fake', label: '虚假贡献（收钱不交付）' },
-  { value: 'copycat', label: '冒领/抄袭（伪冒他人作品）' },
-  { value: 'phishing', label: '钓鱼链接' },
-  { value: 'paidwall', label: '强制付费/付费墙' },
-  { value: 'other', label: '其他' },
-]
-
-function createTipJarApi(ctx) {
-  return new TipJarApi(() => {
-    const remote = ctx.remote
-    if (!remote || !remote.namespaces) return undefined
-    const ns = remote.namespaces.get('tipJar')
-    return ns ? ns.service : undefined
-  })
 }
 
 // ── Styles ──────────────────────────────────────────────────────────────────
@@ -177,26 +86,6 @@ const CSS =
   '.sps-tip-alias{font-weight:600;color:var(--dsw-alias-label-primary)}' +
   '.sps-tip-amount{color:var(--dsw-alias-state-success-primary);font-weight:600;font-variant-numeric:tabular-nums}' +
   '.sps-tip-count{color:var(--dsw-alias-label-secondary)}'
-
-// ── ReportButton（举报通道，匿名 + 必选分类）───────────────────────────────
-
-function ReportButton(props) {
-  const api = props.api
-  const targetId = props.targetId
-  const [open, setOpen] = useState(false)
-  const [category, setCategory] = useState('fake')
-  const [done, setDone] = useState(false)
-  const h = createElement
-  if (done) return h('span', { className: 'sps-report-ok' }, '已收到举报（匿名）')
-  if (!open) return h('button', { className: 'sps-report-btn', title: '匿名举报，同类举报≥3 将标记为有争议', onClick: function () { setOpen(true) } }, '举报')
-  return h('span', { className: 'sps-report-form' },
-    h('select', { className: 'sps-report-select', value: category, onChange: function (e) { setCategory(e.target.value) } },
-      REPORT_CATEGORIES.map(function (c) { return h('option', { key: c.value, value: c.value }, c.label) })),
-    h('button', { className: 'sps-report-btn', onClick: function () {
-      api.reportContributor(targetId, category, getAnonId(), '').then(function () { setDone(true) }).catch(function () { setDone(true) })
-    } }, '提交'),
-    h('button', { className: 'sps-report-btn', onClick: function () { setOpen(false) } }, '取消'))
-}
 
 // ── SponsorCenter ───────────────────────────────────────────────────────────
 
@@ -453,49 +342,6 @@ function ToolCard(props) {
     support)
 }
 
-// ── TipJarEmbed（嵌入式打赏组件：其他插件一行接入）──────────────────────────
-// 用法：其他插件在自己的 slot 里渲染 <TipJarEmbed ctx={ctx} pluginId="xxx" />
-// 详细接入见 EMBED.md。组件读取注册表对应插件 → 展示贡献者打赏入口。
-
-function TipJarEmbed(props) {
-  const api = createTipJarApi(props.ctx)
-  const pluginId = props.pluginId
-  const [data, setData] = useState(null)
-  const [tipState, setTipState] = useState({ stats: null })
-  const h = createElement
-
-  useEffect(function () {
-    let alive = true
-    api.listSponsors().then(function (d) { if (alive && d) setData(d) }).catch(function () {})
-    api.tipStats().then(function (r) { if (alive && r) setTipState({ stats: r.stats }) }).catch(function () {})
-    return function () { alive = false }
-  }, [api, pluginId])
-
-  if (!data) return h('div', { className: 'sps-toolcard' }, '🤝 支持作者（加载中…）')
-  const plugin = (data.plugins || []).filter(function (p) { return p.pluginId === pluginId })[0]
-  if (!plugin) return h('div', { className: 'sps-toolcard sps-tip-line' }, '该插件未在赞助注册表登记（sponsors.json）')
-  const c = (data.contributors || []).filter(function (x) { return x.id === plugin.contributorId })[0]
-  if (!c) return h('div', { className: 'sps-toolcard sps-tip-line' }, '贡献者未登记')
-
-  const eth = c.ethics || {}
-  const ethicsBadge = eth.paidWall === true
-    ? h('span', { className: 'sps-badge-pw' }, '🔴 付费墙')
-    : (eth.voluntary === true ? h('span', { className: 'sps-badge-vol' }, '🟢 自愿打赏') : h('span', { className: 'sps-badge-un' }, '⚪ 未确认'))
-  const addr = c.tips && c.tips.usdc
-  const stat = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
-
-  const line = h('div', { className: 'sps-tool-support' },
-    h('span', { className: 'sps-tip-alias' }, '支持作者 @' + c.alias),
-    ethicsBadge,
-    addr ? h('span', { className: 'sps-num' }, ' · USDC ' + addr.slice(0, 6) + '…' + addr.slice(-4)) : null,
-    stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null,
-    h(ReportButton, { api: api, targetId: c.id }))
-
-  return h('div', { className: 'sps-toolcard' },
-    h('div', { className: 'sps-tool-head' }, '🤝 ' + (plugin.name || pluginId)),
-    line)
-}
-
 // ── Plugin ──────────────────────────────────────────────────────────────────
 
 export default {
@@ -542,4 +388,4 @@ export default {
   },
 }
 
-export { TipJarEmbed }
+export { TipJarEmbed } from './embed.js'

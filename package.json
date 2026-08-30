@@ -18,6 +18,9 @@
     "./client": {
       "default": "./lib/client.js"
     },
+    "./embed": {
+      "default": "./lib/embed.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

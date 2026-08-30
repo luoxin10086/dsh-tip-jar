@@ -49,6 +49,18 @@ await build({
   external: ['react'],
 })
 
+// lib/embed.js：嵌入式打赏组件（纯 ESM，无副作用）。
+// 其他插件在自己的构建中 import 'dsh-tip-jar/embed' 直接打包（React external）。
+await build({
+  entryPoints: ['src/embed.js'],
+  outfile: 'lib/embed.js',
+  bundle: true,
+  format: 'esm',
+  platform: 'browser',
+  target: 'es2020',
+  external: ['react'],
+})
+
 const bundle = readFileSync('lib/.client.tmp.js', 'utf8')
 const wrapped =
   'window.__ModuleLoader__.load({\n' +
@@ -61,4 +73,4 @@ const wrapped =
 writeFileSync('lib/client.js', wrapped)
 rmSync('lib/.client.tmp.js')
 
-console.log('built lib/index.js, lib/remote.js, lib/client.js')
+console.log('built lib/index.js, lib/remote.js, lib/embed.js, lib/client.js')

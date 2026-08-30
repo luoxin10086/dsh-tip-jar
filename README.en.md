@@ -59,8 +59,9 @@ refreshes do not lose it.
     "name": "Tip Jar",
     "contributorId": "ghost-trader", // references contributors.id
     "upstream": {                    // 0.1.6: source declaration (anti-copycat L2)
-      "project": "dsh-ssh-ops",
-      "url": "https://github.com/…"
+      "repo": "https://github.com/…", // upstream repo URL (required)
+      "author": "upstream author",    // required
+      "license": "MIT"                // optional
     },
     "sponsors": [{ "name": "Advertiser", "message": "tagline", "url": "https://…" }]
   }]

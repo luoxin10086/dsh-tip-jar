@@ -138,33 +138,40 @@ class TipJarService extends TypertRemoteService {
   async readReports() {
     const fs = this.ctx.fs
     if (!fs) return []
+    const out = []
     for (const f of this.config.reportsFiles) {
       try {
         const target = await fs.resolve(f, {})
         const text = await fs.readText(target)
-        const out = []
         for (const line of text.split(/\r?\n/)) {
           const l = line.trim()
           if (!l) continue
           try { out.push(JSON.parse(l)) } catch (e) { /* skip bad line */ }
         }
-        return out
       } catch (e) { /* try next candidate */ }
     }
-    return []
+    return out
   }
 
   async appendReport(record) {
     const fs = this.ctx.fs
     if (!fs) throw new Error('fs 服务不可用')
-    const existing = await this.readReports()
-    existing.push(record)
-    const text = existing.map(function (r) { return JSON.stringify(r) }).join('\n')
     let lastError = null
     for (const f of this.config.reportsFiles) {
       try {
+        // 读-写锚定同一候选文件：读该文件已有记录 → 合并新记录 → 写回该文件
         const target = await fs.resolve(f, {})
-        await fs.writeText(target, text)
+        let existing = []
+        try {
+          const text = await fs.readText(target)
+          for (const line of text.split(/\r?\n/)) {
+            const l = line.trim()
+            if (!l) continue
+            try { existing.push(JSON.parse(l)) } catch (e) { /* skip bad line */ }
+          }
+        } catch (e) { /* 新文件：从空开始 */ }
+        existing.push(record)
+        await fs.writeText(target, existing.map(function (r) { return JSON.stringify(r) }).join('\n'))
         return
       } catch (e) { lastError = e /* try next candidate */ }
     }

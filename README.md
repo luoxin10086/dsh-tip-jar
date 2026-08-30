@@ -60,8 +60,9 @@ dsh plugin --profile <name> add dsh-tip-jar
     "name": "打赏罐",
     "contributorId": "ghost-trader",  // 引用 contributors.id
     "upstream": {                     // 0.1.6：来源声明（防抄袭 L2）
-      "project": "dsh-ssh-ops",
-      "url": "https://github.com/…"
+      "repo": "https://github.com/…", // 上游仓库 URL（必填）
+      "author": "上游作者名",          // 必填
+      "license": "MIT"                // 可选
     },
     "sponsors": [{ "name": "甲方", "message": "标语", "url": "https://…" }]
   }]
