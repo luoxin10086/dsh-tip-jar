@@ -6,6 +6,8 @@ import { validateRegistry } from './validate.js'
 
 // 默认查找工作区根目录的 sponsors.json；可通过插件配置 config.roots 覆盖
 const DEFAULT_ROOTS = ['sponsors.json']
+// 链上统计持久化文件候选（部署本地路径由 row config 补充）
+const DEFAULT_STATS_FILES = ['.tip-jar-stats.json']
 
 function fail(code, message) {
   return { code, message }
@@ -16,7 +18,11 @@ class TipJarService extends TypertRemoteService {
 
   constructor(ctx, config = {}) {
     super(ctx, 'tipJar')
-    this.config = { roots: DEFAULT_ROOTS, ...config }
+    this.config = {
+      roots: DEFAULT_ROOTS,
+      statsFiles: DEFAULT_STATS_FILES,
+      ...config,
+    }
   }
 
   async [Service.init]() {
@@ -33,6 +39,51 @@ class TipJarService extends TypertRemoteService {
         error: fail('tip-jar-load-failed', error && error.message ? error.message : String(error)),
       }
     }
+  }
+
+  async tipStats() {
+    try {
+      const data = await this.readStats()
+      return { ok: true, value: data }
+    } catch (error) {
+      return { ok: false, error: fail('tip-jar-stats-read-failed', error && error.message ? error.message : String(error)) }
+    }
+  }
+
+  async saveTipStats(request) {
+    const stats = request && request.stats
+    if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+      return { ok: false, error: fail('tip-jar-bad-stats', 'invalid stats payload') }
+    }
+    try {
+      await this.writeStats(stats)
+      return { ok: true, value: { saved: true } }
+    } catch (error) {
+      return { ok: false, error: fail('tip-jar-stats-write-failed', error && error.message ? error.message : String(error)) }
+    }
+  }
+
+  async readStats() {
+    const fs = this.ctx.fs
+    if (!fs) return { stats: null, present: false }
+    for (const f of this.config.statsFiles) {
+      try {
+        const target = await fs.resolve(f, {})
+        const text = await fs.readText(target)
+        const parsed = JSON.parse(text)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return { stats: parsed, present: true }
+        }
+      } catch (e) { /* try next candidate */ }
+    }
+    return { stats: null, present: false }
+  }
+
+  async writeStats(stats) {
+    const fs = this.ctx.fs
+    if (!fs) throw new Error('fs 服务不可用')
+    const target = await fs.resolve(this.config.statsFiles[0], {})
+    await fs.writeText(target, JSON.stringify(stats))
   }
 
   async loadRegistry() {

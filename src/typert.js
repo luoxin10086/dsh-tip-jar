@@ -25,6 +25,16 @@ const TYPERT = {
             name: 'listSponsors',
             signature: 'async listSponsors(request: TipJarListSponsorsRequest): Promise<TipJarListSponsorsResult>',
           },
+          {
+            kind: 'method',
+            name: 'tipStats',
+            signature: 'async tipStats(request: TipJarTipStatsRequest): Promise<TipJarTipStatsResult>',
+          },
+          {
+            kind: 'method',
+            name: 'saveTipStats',
+            signature: 'async saveTipStats(request: TipJarSaveTipStatsRequest): Promise<TipJarSaveTipStatsResult>',
+          },
         ],
         types: [
           {
@@ -34,6 +44,22 @@ const TYPERT = {
           {
             name: 'TipJarListSponsorsResult',
             declaration: 'export type TipJarListSponsorsResult = TipJarResult<{ ok: boolean; errors: string[]; data: TipJarRegistry | null }>',
+          },
+          {
+            name: 'TipJarTipStatsRequest',
+            declaration: 'export interface TipJarTipStatsRequest {}',
+          },
+          {
+            name: 'TipJarTipStatsResult',
+            declaration: 'export type TipJarTipStatsResult = TipJarResult<{ stats: TipJarStats | null; present: boolean }>',
+          },
+          {
+            name: 'TipJarSaveTipStatsRequest',
+            declaration: 'export interface TipJarSaveTipStatsRequest { readonly stats: TipJarStats }',
+          },
+          {
+            name: 'TipJarSaveTipStatsResult',
+            declaration: 'export type TipJarSaveTipStatsResult = TipJarResult<{ saved: boolean }>',
           },
         ],
       },

@@ -31,6 +31,20 @@ const sponsorsLoadSchema = z.object({
   data: registrySchema.nullable(),
 })
 
+const tipStatsSchema = z.object({
+  stats: z
+    .object({
+      byContributorId: z
+        .record(z.object({ count: z.number(), amountUsdc: z.number() }))
+        .default({}),
+      lastBlock: z.number().default(0),
+    })
+    .nullable(),
+  present: z.boolean().default(false),
+})
+
+const saveTipStatsSchema = z.object({ saved: z.boolean() })
+
 function def(method, requestSchema, requestType, resultSchema2, resultType) {
   return {
     id: PACKAGE + '#' + NS + '/' + method,
@@ -62,6 +76,25 @@ const DESCRIPTORS = [
     'TipJarListSponsorsRequest',
     resultSchema(sponsorsLoadSchema),
     'TipJarListSponsorsResult',
+  ),
+  def(
+    'tipStats',
+    z.object({}),
+    'TipJarTipStatsRequest',
+    resultSchema(tipStatsSchema),
+    'TipJarTipStatsResult',
+  ),
+  def(
+    'saveTipStats',
+    z.object({
+      stats: z.object({
+        byContributorId: z.record(z.object({ count: z.number(), amountUsdc: z.number() })).default({}),
+        lastBlock: z.number().default(0),
+      }),
+    }),
+    'TipJarSaveTipStatsRequest',
+    resultSchema(saveTipStatsSchema),
+    'TipJarSaveTipStatsResult',
   ),
 ]
 

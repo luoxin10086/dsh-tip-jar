@@ -1,8 +1,35 @@
 // dsh-tip-jar/src/client.js
-// Client 半：赞助中心面板（会话「支持」Tab + 设置页）+ 工具卡致谢
+// Client 半：赞助中心面板（会话「支持」Tab + 设置页）+ 工具卡致谢 + 链上到账雷达
 // 通过 Typert Remote 调用 Host（ctx.remote.namespaces.get('tipJar')）
-import { createElement, useState, useEffect } from 'react'
+import { createElement, useState, useEffect, useRef } from 'react'
 import { TYPERT_REMOTE } from './remote.js'
+import { buildGetLogsRequest, parseTransferLogs, aggregateStats, mergeStats, formatUsdc } from './onchain.js'
+
+// 链上到账雷达配置（浏览器友好公共 RPC，按序回退；原生 USDC 合约）
+const RPC_URLS = [
+  'https://polygon-bor-rpc.publicnode.com',
+  'https://1rpc.io/matic',
+]
+const USDC_ADDRESS = '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359'
+const POLL_INTERVAL_MS = 60000
+
+async function rpcCall(method, params) {
+  let lastErr = null
+  for (const url of RPC_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+      })
+      if (!res.ok) { lastErr = new Error('rpc http ' + res.status); continue }
+      const json = await res.json()
+      if (json.error) { lastErr = new Error((json.error && json.error.message) || 'rpc error'); continue }
+      return json.result
+    } catch (e) { lastErr = e }
+  }
+  throw lastErr || new Error('rpc unavailable')
+}
 
 // ── Remote API ──────────────────────────────────────────────────────────────
 
@@ -29,18 +56,28 @@ class TipJarApi {
     if (!rpc.ok) {
       throw new TipJarApiError('rpc-failed', (rpc.error && rpc.error.message) || 'remote call failed')
     }
-    // 业务信封：host 返回 {ok:true, value: {ok, errors, data}}（value 即 loadRegistry 结果）
     const business = rpc.value
     if (!business.ok) {
       throw new TipJarApiError('rpc-failed', (business.error && business.error.message) || 'remote call failed')
     }
-    const result = business.value
+    return business.value
+  }
+
+  async listSponsors() {
+    // business.value = 注册表加载结果 {ok, errors, data}
+    const result = await this.call('listSponsors', {})
     if (result.ok) return result.data
     throw new TipJarApiError('registry-invalid', (result.errors && result.errors.length) ? result.errors.join('; ') : 'registry load failed')
   }
 
-  listSponsors() {
-    return this.call('listSponsors', {})
+  tipStats() {
+    // business.value = {stats, present}
+    return this.call('tipStats', {})
+  }
+
+  saveTipStats(stats) {
+    // business.value = {saved}
+    return this.call('saveTipStats', { stats })
   }
 }
 
@@ -91,27 +128,77 @@ const CSS =
   '.sps-tool-head{font-weight:600;margin-bottom:6px}' +
   '.sps-tool-body{font-size:12px;color:var(--dsw-alias-label-secondary);white-space:pre-wrap;margin-bottom:8px}' +
   '.sps-tool-support{font-size:12px;color:var(--dsw-alias-label-secondary);border-top:1px solid var(--dsw-alias-border-l1);padding-top:6px}' +
-  '.sps-tool-support b{color:var(--dsw-alias-state-warn-primary)}'
+  '.sps-tool-support b{color:var(--dsw-alias-state-warn-primary)}' +
+  '.sps-tip-line{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dsw-alias-label-secondary)}' +
+  '.sps-tip-rank{color:var(--dsw-alias-label-secondary);min-width:16px}' +
+  '.sps-tip-alias{font-weight:600;color:var(--dsw-alias-label-primary)}' +
+  '.sps-tip-amount{color:var(--dsw-alias-state-success-primary);font-weight:600;font-variant-numeric:tabular-nums}' +
+  '.sps-tip-count{color:var(--dsw-alias-label-secondary)}'
 
 // ── SponsorCenter ───────────────────────────────────────────────────────────
 
 function SponsorCenter(props) {
   const api = props.api
+  const ctx = props.ctx
   const [state, setState] = useState(null)
+  const [tipState, setTipState] = useState({ stats: null, present: false, paused: false })
+  const dataRef = useRef(null)
+  const tipRef = useRef({ stats: null, present: false })
 
   useEffect(function () {
     let alive = true
     const load = async function () {
       try {
         const data = await api.listSponsors()
-        if (alive) setState({ ok: true, data })
+        if (alive) { dataRef.current = data; setState({ ok: true, data }) }
       } catch (e) {
         if (alive) setState({ ok: false, errors: [e && e.message ? e.message : 'RPC 调用失败'], data: null })
       }
+      try {
+        const r = await api.tipStats()
+        if (alive && r) {
+          tipRef.current = { stats: r.stats, present: !!r.present }
+          setTipState({ stats: r.stats, present: !!r.present, paused: false })
+        }
+      } catch (e) { /* 统计暂不可用，轮询会重试 */ }
     }
     load()
     return function () { alive = false }
   }, [api])
+
+  // 链上到账雷达：60s 增量轮询 Polygon USDC Transfer 事件
+  useEffect(function () {
+    let alive = true
+    const poll = async function () {
+      const data = dataRef.current
+      if (!data) return
+      const contributors = (data.contributors || []).filter(function (c) { return c.tips && c.tips.usdc })
+      if (contributors.length === 0) return
+      try {
+        const bnHex = await rpcCall('eth_blockNumber', [])
+        const current = parseInt(bnHex, 16)
+        const prevBlock = (tipRef.current.stats && tipRef.current.stats.lastBlock) || 0
+        // 从安装时刻起算：无持久化进度时从当前区块开始（不扫历史）
+        const fromBlock = prevBlock > 0 ? prevBlock + 1 : current
+        if (fromBlock > current) return
+        const resp = await rpcCall('eth_getLogs', [
+          buildGetLogsRequest(USDC_ADDRESS, contributors, '0x' + fromBlock.toString(16), 'latest').params[0],
+        ])
+        const logs = Array.isArray(resp) ? resp : (resp && resp.result) || []
+        const parsed = parseTransferLogs(logs, USDC_ADDRESS)
+        const agg = aggregateStats(parsed, contributors)
+        const merged = mergeStats(tipRef.current.stats || { byContributorId: {}, lastBlock: 0 }, agg)
+        tipRef.current = { stats: merged, present: true }
+        if (alive) setTipState({ stats: merged, present: true, paused: false })
+        api.saveTipStats(merged).catch(function () {})
+      } catch (e) {
+        if (alive) setTipState(function (prev) { return { stats: prev.stats, present: prev.present, paused: true } })
+      }
+    }
+    poll()
+    const stop = ctx.interval(poll, POLL_INTERVAL_MS)
+    return function () { alive = false; stop() }
+  }, [api, ctx])
 
   const h = createElement
   if (!state) {
@@ -139,6 +226,12 @@ function SponsorCenter(props) {
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
+    const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
+    if (tipEntry) {
+      rows.push(h('div', { className: 'sps-tip-line' },
+        '🎖 链上已收 ', h('b', { className: 'sps-tip-amount' }, formatUsdc(tipEntry.amountUsdc)),
+        ' · ', String(tipEntry.count), ' 笔'))
+    }
     if (addr) {
       const short = addr.slice(0, 6) + '…' + addr.slice(-4)
       const copyBtn = h('button', { className: 'sps-btn', onClick: function () {
@@ -187,10 +280,36 @@ function SponsorCenter(props) {
         }))
     : null
 
+  // 🎖 致谢墙：链上真实到账排行（匿名统计）
+  const tipEntries = []
+  if (tipState.stats && tipState.stats.byContributorId) {
+    for (const id of Object.keys(tipState.stats.byContributorId)) {
+      const c = byId[id]
+      if (!c) continue
+      const s = tipState.stats.byContributorId[id]
+      tipEntries.push({ id, alias: c.alias, count: s.count, amountUsdc: s.amountUsdc })
+    }
+  }
+  tipEntries.sort(function (a, b) { return b.amountUsdc - a.amountUsdc })
+  const wall = h('div', { className: 'sps-section' },
+    h('div', { className: 'sps-sec-title' }, '🎖 致谢墙（链上真实到账 · 1 区块确认）'),
+    tipEntries.length
+      ? tipEntries.map(function (t, i) {
+          return h('div', { key: t.id, className: 'sps-tip-line' },
+            h('span', { className: 'sps-tip-rank' }, String(i + 1) + '. '),
+            h('span', { className: 'sps-tip-alias' }, '@' + t.alias),
+            h('span', { className: 'sps-tip-amount' }, formatUsdc(t.amountUsdc)),
+            h('span', { className: 'sps-tip-count' }, t.count + ' 笔'))
+        })
+      : h('div', { className: 'sps-note' }, tipState.paused
+          ? '链上统计暂停（RPC 不可达），稍后自动重试。'
+          : '暂无链上到账。实时监听中（从安装时刻起算，约 60 秒刷新）。'))
+
   return h('div', { className: 'sps-root' },
     h('div', { className: 'sps-title' }, '🤝 支持贡献者'),
     h('div', { className: 'sps-note' }, d.privacyNote || '所有信息由贡献者自行声明，未经认证前标记为未验证。'),
     cards,
+    wall,
     sponsorSec)
 }
 
@@ -250,7 +369,7 @@ function ToolCard(props) {
 // ── Plugin ──────────────────────────────────────────────────────────────────
 
 export default {
-  inject: ['remote', 'slots'],
+  inject: ['remote', 'slots', 'timer'],
   async apply(ctx) {
     const slots = ctx.slots
     if (!slots) return
@@ -276,13 +395,13 @@ export default {
     slots.inject('conversation.view', function () {
       return slots.register(
         { name: 'conversation.view', id: 'sponsors-center', order: 20, label: '支持' },
-        function () { return createElement(SponsorCenter, { api: api }) })
+        function () { return createElement(SponsorCenter, { api: api, ctx: ctx }) })
     })
     // 入口 2：设置页「支持贡献者」
     slots.inject('settings.section', function () {
       return slots.register(
         { name: 'settings.section', id: 'sponsors', order: 30, label: '支持贡献者' },
-        function () { return createElement(SponsorCenter, { api: api }) })
+        function () { return createElement(SponsorCenter, { api: api, ctx: ctx }) })
     })
     // 入口 3：pm_trading_status 工具卡致谢
     slots.inject('tool.call.toolview', function () {
