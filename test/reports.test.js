@@ -72,5 +72,41 @@ const r8 = computeDisputed([
 ], 2)
 check('自定义阈值 2 生效', r8['a'] && r8['a']['fake'] === 2)
 
+// 9. 有限期窗口：全部举报超过 30 天 → 不争议（自动消退）
+const WINDOW = 30 * 24 * 3600 * 1000
+const now = 2000000000000
+const old = now - 40 * 24 * 3600 * 1000
+const r9 = computeDisputed([
+  rep('a', 'fake', 'dev1', old),
+  rep('a', 'fake', 'dev2', old),
+  rep('a', 'fake', 'dev3', old),
+], 3, 24 * 3600 * 1000, WINDOW, now)
+check('全部超窗 → 无争议', Object.keys(r9).length === 0, JSON.stringify(r9))
+
+// 10. 有限期窗口：3 条都在 30 天内 → 争议
+const fresh = now - 5 * 24 * 3600 * 1000
+const r10 = computeDisputed([
+  rep('a', 'fake', 'dev1', fresh),
+  rep('a', 'fake', 'dev2', fresh),
+  rep('a', 'fake', 'dev3', fresh),
+], 3, 24 * 3600 * 1000, WINDOW, now)
+check('窗内 3 来源 → 争议', r10['a'] && r10['a']['fake'] === 3, JSON.stringify(r10))
+
+// 11. 有限期窗口：混合（2 条窗内 + 1 条超窗）→ 不达阈值
+const r11 = computeDisputed([
+  rep('a', 'fake', 'dev1', fresh),
+  rep('a', 'fake', 'dev2', fresh),
+  rep('a', 'fake', 'dev3', old),
+], 3, 24 * 3600 * 1000, WINDOW, now)
+check('混合（2 窗内 1 超窗）→ 无争议', Object.keys(r11).length === 0, JSON.stringify(r11))
+
+// 12. 无 now 参数时默认以最新举报为基准（向后兼容）
+const r12 = computeDisputed([
+  rep('a', 'fake', 'dev1', 0),
+  rep('a', 'fake', 'dev2', 0),
+  rep('a', 'fake', 'dev3', 0),
+])
+check('默认参数行为不变', r12['a'] && r12['a']['fake'] === 3)
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' FAILED')
 process.exit(failures === 0 ? 0 : 1)

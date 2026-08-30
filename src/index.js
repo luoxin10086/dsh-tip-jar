@@ -128,7 +128,9 @@ class TipJarService extends TypertRemoteService {
   async disputed() {
     try {
       const reports = await this.readReports()
-      const disputed = computeDisputed(reports)
+      // 有限期：30 天无新举报自动消退（v1.1 校准，ECOSYSTEM-RISKS §5.2）
+      const DAY = 24 * 3600 * 1000
+      const disputed = computeDisputed(reports, 3, DAY, 30 * DAY, Date.now())
       return { ok: true, value: { disputed } }
     } catch (error) {
       return { ok: false, error: fail('tip-jar-disputed-failed', error && error.message ? error.message : String(error)) }

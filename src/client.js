@@ -202,6 +202,10 @@ function SponsorCenter(props) {
       h(ReportButton, { api: api, targetId: c.id }),
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
+    // G4 大额打赏提醒（R1④ / R10②）：未验证贡献者明示核实义务
+    if (!c.verified) {
+      rows.push(h('div', { className: 'sps-note' }, '⚠️ 未验证：大额打赏前请自行核实其身份与承诺（地址可链上追溯，但平台不担保交付）。'))
+    }
     const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
     if (tipEntry) {
       rows.push(h('div', { className: 'sps-tip-line' },
@@ -286,7 +290,9 @@ function SponsorCenter(props) {
     h('div', { className: 'sps-note' }, d.privacyNote || '所有信息由贡献者自行声明，未经认证前标记为未验证。'),
     cards,
     wall,
-    sponsorSec)
+    sponsorSec,
+    // G3 免责声明（R5①）：平台不代收、不托管、不担保
+    h('div', { className: 'sps-note' }, '免责声明：本插件不代收、不托管、不担保任何打赏款项；打赏为受益者与贡献者之间的纯 P2P 行为，收款用途与交付承诺由贡献者自行负责。'))
 }
 
 // ── ToolCard ────────────────────────────────────────────────────────────────
