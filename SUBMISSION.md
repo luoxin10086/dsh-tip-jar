@@ -31,10 +31,21 @@ sponsor:
 - 隐私硬约束：不强制真实身份，化名即可，地址公开与否自选
 - 校验规则开源实现：dsh-tip-jar 内 `src/validate.js`（6 项测试锁定）
 
-## 3. 发布清单
+## 3. 发布清单（本地仓库已就绪：17 文件，root-commit 36f33ec；npm dry-run 已通过）
 
-- [ ] GitHub 仓库创建（建议名 `dsh-tip-jar`，源码 = 本目录，含 README.md/README.en.md/LICENSE）
-- [ ] `npm publish`（需 npm token；包名 dsh-tip-jar 需先确认未被占用）
+- [ ] GitHub 仓库创建（建议名 `dsh-tip-jar`）后推送：
+      ```powershell
+      git remote add origin https://github.com/<你的GitHub>/dsh-tip-jar.git
+      git branch -M main
+      git push -u origin main
+      ```
+      （当前 commit 身份为仓库本地占位 `dsh-tip-jar <dsh-tip-jar@local>`，推送前可 `git config user.name/user.email` 改成你的）
+- [ ] `npm publish`（包名 `dsh-tip-jar` 已确认可用；**注意**：本机 npm 默认 registry 是 npmmirror，
+      发布进官方生态需显式用官方源）：
+      ```powershell
+      npm login --registry https://registry.npmjs.org
+      npm publish --registry https://registry.npmjs.org
+      ```
 - [ ] awesome-deepseek-harness PR（上文条目）
 - [ ] manifest-spec 讨论 issue（可挂在 dsh-tip-jar 仓库或 awesome 仓库）
 
