@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "privacyNote": "贡献者可仅使用化名（alias），地址公开与否自选；所有信息由贡献者自行声明，未经生态认证前一律标记为未验证。插件不代收任何资金，打赏为纯 P2P 直连。",
+  "contributors": [
+    {
+      "id": "your-id",
+      "alias": "your_alias",
+      "verified": false,
+      "bio": "你的简介（一句话，如：XXX 工具作者）",
+      "ethics": { "voluntary": true, "paidWall": false },
+      "tips": {
+        "usdc": "0x0000000000000000000000000000000000000000",
+        "chains": ["polygon"],
+        "fiat": [
+          { "label": "爱发电", "url": "https://afdian.com/a/your-id" },
+          { "label": "GitHub Sponsors", "url": "https://github.com/sponsors/your-id" }
+        ]
+      },
+      "subscriptions": []
+    },
+    {
+      "id": "dsh-tip-jar",
+      "alias": "luoxin10086",
+      "verified": false,
+      "bio": "dsh-tip-jar（打赏罐）作者 —— 可选保留：如果你觉得打赏罐帮你收到了打赏，欢迎支持工具作者（完全自愿，可随时删除本条目）",
+      "ethics": { "voluntary": true, "paidWall": false },
+      "tips": {
+        "usdc": "0xcea407b16bc7ddd308d74330bdc271d490835123",
+        "chains": ["polygon"],
+        "fiat": [
+          { "label": "GitHub Sponsors", "url": "https://github.com/sponsors/luoxin10086" }
+        ]
+      },
+      "subscriptions": []
+    }
+  ],
+  "plugins": [
+    {
+      "pluginId": "your-plugin-id",
+      "name": "你的插件名",
+      "contributorId": "your-id",
+      "sponsors": []
+    }
+  ]
+}

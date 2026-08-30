@@ -16,9 +16,22 @@ Pure P2P, zero custody, privacy by default (pseudonymous + unverified badges).
 - **Safe degradation**: missing/corrupt registry or invalid addresses → empty state or error, never a crash
 - **On-chain radar** (0.1.5): watches Polygon USDC `Transfer` events (public RPCs, 60s poll, 1-block confirm, since install), aggregates per-contributor amount / count / deduped supporter count, and shows a thank-you wall
 - **Ethics badges** (0.1.5): 🟢 voluntary / ⚪ unconfirmed / 🔴 paywall — driven by the registry `ethics` declaration, validation enforced (voluntary + no paywall is a listing requirement)
-- **Report & dispute flag** (0.1.6): every contributor card has a Report button (5 categories: fake / copycat / phishing / paywall / other); ≥3 distinct devices reporting the same category auto-flags `🟡 disputed`; records persist to `report.jsonl`
-- **Upstream declaration** (0.1.6): plugin entries can declare an `upstream` project (anti-copycat traceability, spec L2)
+- **Report (record-only)** (0.1.6, v1.1-B downgrade): every contributor card has a Report button (5 categories: fake / copycat / phishing / paywall / other); anonymous submissions are recorded only — **no automatic badges** (governance = disclosure, not adjudication)
+- **Upstream declaration** (0.1.6): plugin entries can declare an `upstream` project (attribution guard: copying code is licensed, impersonation is not — spec §5.4)
 - **Embeddable component** (0.1.6): `TipJarEmbed` — other plugins can add a tip entry with one line (see `EMBED.md`)
+
+## Quick start (30-second onboarding)
+
+```bash
+# 1. Install
+dsh plugin --profile <name> add dsh-tip-jar
+# 2. Copy the example registry and make it yours
+copy node_modules/dsh-tip-jar/sponsors.example.json sponsors.json
+# 3. Edit sponsors.json: fill in your USDC address / tip platform links
+# 4. Restart the Harness → your tip entry appears in the "Support" tab
+```
+
+> 💡 The `dsh-tip-jar` author entry in the example file is **optional**: if the tip jar helped you receive tips, feel free to keep it to support the tool author (fully voluntary, delete anytime).
 
 ## Install (persistent)
 

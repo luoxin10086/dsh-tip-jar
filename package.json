@@ -32,7 +32,8 @@
     "EMBED.md",
     "ETHICS.md",
     "ECOSYSTEM-RISKS.md",
-    "LICENSE"
+    "LICENSE",
+    "sponsors.example.json"
   ],
   "dsh": {
     "bundle": {
