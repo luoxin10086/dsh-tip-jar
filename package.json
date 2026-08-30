@@ -58,5 +58,13 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node test/registry.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luoxin10086/dsh-tip-jar.git"
+  },
+  "homepage": "https://github.com/luoxin10086/dsh-tip-jar#readme",
+  "bugs": {
+    "url": "https://github.com/luoxin10086/dsh-tip-jar/issues"
   }
 }
