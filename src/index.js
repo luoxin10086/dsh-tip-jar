@@ -88,8 +88,16 @@ class TipJarService extends TypertRemoteService {
   async writeStats(stats) {
     const fs = this.ctx.fs
     if (!fs) throw new Error('fs 服务不可用')
-    const target = await fs.resolve(this.config.statsFiles[0], {})
-    await fs.writeText(target, JSON.stringify(stats))
+    const text = JSON.stringify(stats)
+    let lastError = null
+    for (const f of this.config.statsFiles) {
+      try {
+        const target = await fs.resolve(f, {})
+        await fs.writeText(target, text)
+        return
+      } catch (e) { lastError = e /* try next candidate */ }
+    }
+    throw lastError || new Error('所有统计文件路径均不可写: ' + this.config.statsFiles.join(', '))
   }
 
   async reportContributor(request) {
@@ -149,10 +157,18 @@ class TipJarService extends TypertRemoteService {
   async appendReport(record) {
     const fs = this.ctx.fs
     if (!fs) throw new Error('fs 服务不可用')
-    const target = await fs.resolve(this.config.reportsFiles[0], {})
     const existing = await this.readReports()
     existing.push(record)
-    await fs.writeText(target, existing.map(function (r) { return JSON.stringify(r) }).join('\n'))
+    const text = existing.map(function (r) { return JSON.stringify(r) }).join('\n')
+    let lastError = null
+    for (const f of this.config.reportsFiles) {
+      try {
+        const target = await fs.resolve(f, {})
+        await fs.writeText(target, text)
+        return
+      } catch (e) { lastError = e /* try next candidate */ }
+    }
+    throw lastError || new Error('所有举报文件路径均不可写: ' + this.config.reportsFiles.join(', '))
   }
 
   async loadRegistry() {
