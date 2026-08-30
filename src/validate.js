@@ -17,8 +17,9 @@ function checkLink(errors, prefix, item) {
 
 export function validateRegistry(input) {
   const errors = []
+  const warnings = []
   if (!isObj(input)) {
-    return { ok: false, errors: ['注册表必须是 JSON 对象'] }
+    return { ok: false, errors: ['注册表必须是 JSON 对象'], warnings }
   }
   if (input.schemaVersion !== 1) {
     errors.push('schemaVersion 必须为 1')
@@ -54,6 +55,22 @@ export function validateRegistry(input) {
           checkLink(errors, p + '.subscriptions[' + j + ']', s)
         })
       }
+      // 自愿打赏伦理声明（dsh-sponsor-ethics）
+      if (c.ethics !== undefined) {
+        if (!isObj(c.ethics)) {
+          errors.push(p + '.ethics 必须是对象')
+        } else {
+          if (c.ethics.voluntary !== undefined && typeof c.ethics.voluntary !== 'boolean') {
+            errors.push(p + '.ethics.voluntary 必须是布尔值')
+          }
+          if (c.ethics.paidWall !== undefined && typeof c.ethics.paidWall !== 'boolean') {
+            errors.push(p + '.ethics.paidWall 必须是布尔值')
+          }
+          if (c.ethics.paidWall === true) {
+            warnings.push(p + '.ethics.paidWall=true：该贡献者声明存在付费墙，违反自愿打赏伦理规范')
+          }
+        }
+      }
     })
   }
 
@@ -83,5 +100,5 @@ export function validateRegistry(input) {
     })
   }
 
-  return { ok: errors.length === 0, errors }
+  return { ok: errors.length === 0, errors, warnings }
 }

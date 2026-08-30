@@ -110,6 +110,9 @@ const CSS =
   '.sps-alias{font-weight:600;font-size:14px}' +
   '.sps-badge{font-size:11px;color:var(--dsw-alias-state-warn-primary);border:1px solid var(--dsw-alias-state-warn-primary);border-radius:10px;padding:0 8px}' +
   '.sps-badge-ok{font-size:11px;color:var(--dsw-alias-state-success-primary);border:1px solid var(--dsw-alias-state-success-primary);border-radius:10px;padding:0 8px}' +
+  '.sps-badge-vol{font-size:11px;color:var(--dsw-alias-state-success-primary);border:1px solid var(--dsw-alias-state-success-primary);border-radius:10px;padding:0 8px}' +
+  '.sps-badge-pw{font-size:11px;color:var(--dsw-alias-state-error-primary);border:1px solid var(--dsw-alias-state-error-primary);border-radius:10px;padding:0 8px}' +
+  '.sps-badge-un{font-size:11px;color:var(--dsw-alias-label-secondary);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:0 8px}' +
   '.sps-bio{font-size:12px;color:var(--dsw-alias-label-secondary)}' +
   '.sps-addr-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
   '.sps-label{font-size:11px;color:var(--dsw-alias-label-secondary);text-transform:uppercase;letter-spacing:.04em}' +
@@ -221,9 +224,20 @@ function SponsorCenter(props) {
 
   const cards = (d.contributors || []).map(function (c) {
     const addr = c.tips && c.tips.usdc
+    // 自愿打赏伦理徽章（dsh-sponsor-ethics）
+    const eth = c.ethics || {}
+    let ethicsBadge = null
+    if (eth.paidWall === true) {
+      ethicsBadge = h('span', { className: 'sps-badge-pw', title: '该贡献者声明存在付费墙，违反自愿打赏伦理规范（ETHICS.md）' }, '🔴 存在付费墙')
+    } else if (eth.voluntary === true) {
+      ethicsBadge = h('span', { className: 'sps-badge-vol', title: '已声明：打赏自愿、无条件、无付费墙（遵循 dsh-sponsor-ethics）' }, '🟢 自愿打赏')
+    } else {
+      ethicsBadge = h('span', { className: 'sps-badge-un', title: '未声明自愿性，请自行判断（规范见 ETHICS.md）' }, '⚪ 未确认自愿性')
+    }
     const head = h('div', { className: 'sps-card-head' },
       h('span', { className: 'sps-alias' }, '@' + c.alias),
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
+      ethicsBadge,
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
     const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]

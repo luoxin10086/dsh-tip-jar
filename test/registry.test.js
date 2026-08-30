@@ -44,5 +44,25 @@ check('重复 contributor id 被拒绝', r4.ok === false)
 // 5. 非对象输入应被拒绝
 check('null 输入被拒绝', validateRegistry(null).ok === false)
 
+// 6. ethics 合法结构：ok 且 warnings 为空数组
+const goodEthics = JSON.parse(raw)
+goodEthics.contributors[0].ethics = { voluntary: true, paidWall: false }
+const r6 = validateRegistry(goodEthics)
+check('ethics 合法结构通过且 warnings 为空数组',
+  r6.ok === true && Array.isArray(r6.warnings) && r6.warnings.length === 0)
+
+// 7. paidWall:true → 警告但不失败（合规标记，非结构错误）
+const paidWall = JSON.parse(raw)
+paidWall.contributors[0].ethics = { voluntary: true, paidWall: true }
+const r7 = validateRegistry(paidWall)
+check('paidWall=true 产生警告且 ok 仍为 true',
+  r7.ok === true && Array.isArray(r7.warnings) && JSON.stringify(r7.warnings).indexOf('paidWall') !== -1)
+
+// 8. ethics 字段类型错误应被拒绝
+const badEthics = JSON.parse(raw)
+badEthics.contributors[0].ethics = { voluntary: 'yes' }
+const r8 = validateRegistry(badEthics)
+check('ethics.voluntary 非布尔被拒', r8.ok === false)
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' FAILED')
 process.exit(failures === 0 ? 0 : 1)
