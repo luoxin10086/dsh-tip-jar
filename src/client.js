@@ -79,7 +79,40 @@ class TipJarApi {
     // business.value = {saved}
     return this.call('saveTipStats', { stats })
   }
+
+  reportContributor(targetId, category, anonId, note) {
+    // business.value = {received}
+    return this.call('reportContributor', { targetId, category, anonId, note })
+  }
+
+  disputed() {
+    // business.value = {disputed}
+    return this.call('disputed', {})
+  }
 }
+
+// 设备匿名编号：同一设备同一编号（防同一人反复刷举报）
+function getAnonId() {
+  try {
+    const key = 'dsh-tip-jar-anon'
+    let id = window.localStorage.getItem(key)
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36)
+      window.localStorage.setItem(key, id)
+    }
+    return id
+  } catch (e) {
+    return Math.random().toString(36).slice(2)
+  }
+}
+
+const REPORT_CATEGORIES = [
+  { value: 'fake', label: '虚假贡献（收钱不交付）' },
+  { value: 'copycat', label: '冒领/抄袭（伪冒他人作品）' },
+  { value: 'phishing', label: '钓鱼链接' },
+  { value: 'paidwall', label: '强制付费/付费墙' },
+  { value: 'other', label: '其他' },
+]
 
 function createTipJarApi(ctx) {
   return new TipJarApi(() => {
@@ -113,6 +146,13 @@ const CSS =
   '.sps-badge-vol{font-size:11px;color:var(--dsw-alias-state-success-primary);border:1px solid var(--dsw-alias-state-success-primary);border-radius:10px;padding:0 8px}' +
   '.sps-badge-pw{font-size:11px;color:var(--dsw-alias-state-error-primary);border:1px solid var(--dsw-alias-state-error-primary);border-radius:10px;padding:0 8px}' +
   '.sps-badge-un{font-size:11px;color:var(--dsw-alias-label-secondary);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:0 8px}' +
+  '.sps-badge-ds{font-size:11px;color:var(--dsw-alias-state-warn-primary);border:1px solid var(--dsw-alias-state-warn-primary);border-radius:10px;padding:0 8px}' +
+  '.sps-report{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dsw-alias-label-secondary)}' +
+  '.sps-report-btn{background:none;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:11px;padding:2px 8px}' +
+  '.sps-report-btn:hover{color:var(--dsw-alias-state-error-primary);border-color:var(--dsw-alias-state-error-primary)}' +
+  '.sps-report-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}' +
+  '.sps-report-select{font-size:11px;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:6px;color:var(--dsw-alias-label-primary);padding:2px 6px}' +
+  '.sps-report-ok{font-size:11px;color:var(--dsw-alias-state-success-primary)}' +
   '.sps-bio{font-size:12px;color:var(--dsw-alias-label-secondary)}' +
   '.sps-addr-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
   '.sps-label{font-size:11px;color:var(--dsw-alias-label-secondary);text-transform:uppercase;letter-spacing:.04em}' +
@@ -138,6 +178,26 @@ const CSS =
   '.sps-tip-amount{color:var(--dsw-alias-state-success-primary);font-weight:600;font-variant-numeric:tabular-nums}' +
   '.sps-tip-count{color:var(--dsw-alias-label-secondary)}'
 
+// ── ReportButton（举报通道，匿名 + 必选分类）───────────────────────────────
+
+function ReportButton(props) {
+  const api = props.api
+  const targetId = props.targetId
+  const [open, setOpen] = useState(false)
+  const [category, setCategory] = useState('fake')
+  const [done, setDone] = useState(false)
+  const h = createElement
+  if (done) return h('span', { className: 'sps-report-ok' }, '已收到举报（匿名）')
+  if (!open) return h('button', { className: 'sps-report-btn', title: '匿名举报，同类举报≥3 将标记为有争议', onClick: function () { setOpen(true) } }, '举报')
+  return h('span', { className: 'sps-report-form' },
+    h('select', { className: 'sps-report-select', value: category, onChange: function (e) { setCategory(e.target.value) } },
+      REPORT_CATEGORIES.map(function (c) { return h('option', { key: c.value, value: c.value }, c.label) })),
+    h('button', { className: 'sps-report-btn', onClick: function () {
+      api.reportContributor(targetId, category, getAnonId(), '').then(function () { setDone(true) }).catch(function () { setDone(true) })
+    } }, '提交'),
+    h('button', { className: 'sps-report-btn', onClick: function () { setOpen(false) } }, '取消'))
+}
+
 // ── SponsorCenter ───────────────────────────────────────────────────────────
 
 function SponsorCenter(props) {
@@ -145,6 +205,7 @@ function SponsorCenter(props) {
   const ctx = props.ctx
   const [state, setState] = useState(null)
   const [tipState, setTipState] = useState({ stats: null, present: false, paused: false })
+  const [disputedState, setDisputedState] = useState(null)
   const dataRef = useRef(null)
   const tipRef = useRef({ stats: null, present: false })
 
@@ -164,6 +225,10 @@ function SponsorCenter(props) {
           setTipState({ stats: r.stats, present: !!r.present, paused: false })
         }
       } catch (e) { /* 统计暂不可用，轮询会重试 */ }
+      try {
+        const r = await api.disputed()
+        if (alive && r && r.disputed) setDisputedState(r.disputed)
+      } catch (e) { /* 争议状态暂不可用 */ }
     }
     load()
     return function () { alive = false }
@@ -234,10 +299,18 @@ function SponsorCenter(props) {
     } else {
       ethicsBadge = h('span', { className: 'sps-badge-un', title: '未声明自愿性，请自行判断（规范见 ETHICS.md）' }, '⚪ 未确认自愿性')
     }
+    const dsp = disputedState && disputedState[c.id]
+    let disputedBadge = null
+    if (dsp) {
+      const detail = Object.keys(dsp).map(function (cat) { return cat + '×' + dsp[cat] }).join('，')
+      disputedBadge = h('span', { className: 'sps-badge-ds', title: '收到举报：' + detail + '（≥3 同类来源触发，仅供参考）' }, '🟡 有争议')
+    }
     const head = h('div', { className: 'sps-card-head' },
       h('span', { className: 'sps-alias' }, '@' + c.alias),
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
       ethicsBadge,
+      disputedBadge,
+      h(ReportButton, { api: api, targetId: c.id }),
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
     const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
@@ -380,6 +453,49 @@ function ToolCard(props) {
     support)
 }
 
+// ── TipJarEmbed（嵌入式打赏组件：其他插件一行接入）──────────────────────────
+// 用法：其他插件在自己的 slot 里渲染 <TipJarEmbed ctx={ctx} pluginId="xxx" />
+// 详细接入见 EMBED.md。组件读取注册表对应插件 → 展示贡献者打赏入口。
+
+function TipJarEmbed(props) {
+  const api = createTipJarApi(props.ctx)
+  const pluginId = props.pluginId
+  const [data, setData] = useState(null)
+  const [tipState, setTipState] = useState({ stats: null })
+  const h = createElement
+
+  useEffect(function () {
+    let alive = true
+    api.listSponsors().then(function (d) { if (alive && d) setData(d) }).catch(function () {})
+    api.tipStats().then(function (r) { if (alive && r) setTipState({ stats: r.stats }) }).catch(function () {})
+    return function () { alive = false }
+  }, [api, pluginId])
+
+  if (!data) return h('div', { className: 'sps-toolcard' }, '🤝 支持作者（加载中…）')
+  const plugin = (data.plugins || []).filter(function (p) { return p.pluginId === pluginId })[0]
+  if (!plugin) return h('div', { className: 'sps-toolcard sps-tip-line' }, '该插件未在赞助注册表登记（sponsors.json）')
+  const c = (data.contributors || []).filter(function (x) { return x.id === plugin.contributorId })[0]
+  if (!c) return h('div', { className: 'sps-toolcard sps-tip-line' }, '贡献者未登记')
+
+  const eth = c.ethics || {}
+  const ethicsBadge = eth.paidWall === true
+    ? h('span', { className: 'sps-badge-pw' }, '🔴 付费墙')
+    : (eth.voluntary === true ? h('span', { className: 'sps-badge-vol' }, '🟢 自愿打赏') : h('span', { className: 'sps-badge-un' }, '⚪ 未确认'))
+  const addr = c.tips && c.tips.usdc
+  const stat = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
+
+  const line = h('div', { className: 'sps-tool-support' },
+    h('span', { className: 'sps-tip-alias' }, '支持作者 @' + c.alias),
+    ethicsBadge,
+    addr ? h('span', { className: 'sps-num' }, ' · USDC ' + addr.slice(0, 6) + '…' + addr.slice(-4)) : null,
+    stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null,
+    h(ReportButton, { api: api, targetId: c.id }))
+
+  return h('div', { className: 'sps-toolcard' },
+    h('div', { className: 'sps-tool-head' }, '🤝 ' + (plugin.name || pluginId)),
+    line)
+}
+
 // ── Plugin ──────────────────────────────────────────────────────────────────
 
 export default {
@@ -425,3 +541,5 @@ export default {
     })
   },
 }
+
+export { TipJarEmbed }
