@@ -14,6 +14,11 @@ Pure P2P, zero custody, privacy by default (pseudonymous + unverified badges).
 - **Sponsor slots**: static "Sponsored by …" placements (author negotiates directly with advertisers)
 - **Privacy by default**: alias only, unverified badge, no forced identity
 - **Safe degradation**: missing/corrupt registry or invalid addresses → empty state or error, never a crash
+- **On-chain radar** (0.1.5): watches Polygon USDC `Transfer` events (public RPCs, 60s poll, 1-block confirm, since install), aggregates per-contributor amount / count / deduped supporter count, and shows a thank-you wall
+- **Ethics badges** (0.1.5): 🟢 voluntary / ⚪ unconfirmed / 🔴 paywall — driven by the registry `ethics` declaration, validation enforced (voluntary + no paywall is a listing requirement)
+- **Report & dispute flag** (0.1.6): every contributor card has a Report button (5 categories: fake / copycat / phishing / paywall / other); ≥3 distinct devices reporting the same category auto-flags `🟡 disputed`; records persist to `report.jsonl`
+- **Upstream declaration** (0.1.6): plugin entries can declare an `upstream` project (anti-copycat traceability, spec L2)
+- **Embeddable component** (0.1.6): `TipJarEmbed` — other plugins can add a tip entry with one line (see `EMBED.md`)
 
 ## Install (persistent)
 
@@ -39,6 +44,10 @@ refreshes do not lose it.
     "alias": "ghost_trader",         // required, pseudonym
     "verified": false,               // required; false → unverified badge
     "bio": "one-liner",
+    "ethics": {                      // enforced since 0.1.5
+      "voluntary": true,             // voluntary tips (no paywall)
+      "paidWall": false              // true → 🔴 paywall, not listed
+    },
     "tips": {
       "usdc": "0x…(40 hex)",         // optional, format-checked
       "fiat": [{ "label": "Afdian", "url": "https://…" }]
@@ -49,6 +58,10 @@ refreshes do not lose it.
     "pluginId": "dsh-tip-jar",
     "name": "Tip Jar",
     "contributorId": "ghost-trader", // references contributors.id
+    "upstream": {                    // 0.1.6: source declaration (anti-copycat L2)
+      "project": "dsh-ssh-ops",
+      "url": "https://github.com/…"
+    },
     "sponsors": [{ "name": "Advertiser", "message": "tagline", "url": "https://…" }]
   }]
 }
@@ -60,7 +73,7 @@ Full design & manifest spec: see `dsh-sponsors/PROJECT.md` and
 ## Development
 
 ```bash
-npm test       # registry validation tests (red/green)
+npm test       # registry / on-chain / dispute / service suites (red/green)
 npm run build  # esbuild: host / remote / client (__ModuleLoader__)
 ```
 

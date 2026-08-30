@@ -15,6 +15,11 @@ users tip from a sponsor-center panel, a settings page, or tool-card credits.
 - **甲方赞助位**：`Sponsored by …` 静态展示（作者直接与甲方洽谈）
 - **隐私默认**：化名即可，未验证徽章，不强制真实身份
 - **降级安全**：注册表缺失/损坏/地址非法 → 空态或错误提示，不崩溃
+- **链上到账雷达**（0.1.5）：监听 Polygon USDC `Transfer` 事件（公共 RPC、60s 轮询、1 区块确认、自安装起算），实时统计每位贡献者的到账金额/笔数/去重支持人数，展示致谢墙
+- **伦理徽章**（0.1.5）：🟢 自愿打赏 / ⚪ 未确认 / 🔴 付费墙 —— 由注册表 `ethics` 声明驱动，校验强制（自愿+无付费墙是收录前提）
+- **举报与争议标记**（0.1.6）：每个贡献者卡片带「举报」按钮（5 分类：虚假/抄袭/钓鱼/付费墙/其他）；同分类 ≥3 个不同设备举报 → 自动 `🟡 有争议`；记录持久化到 `report.jsonl`
+- **upstream 来源声明**（0.1.6）：插件条目可声明 `upstream` 项目（防抄袭可追溯，规范 L2）
+- **嵌入组件**（0.1.6）：`TipJarEmbed` —— 其他插件一行接入打赏入口（详见 `EMBED.md`）
 
 ## 安装（常驻）
 
@@ -40,6 +45,10 @@ dsh plugin --profile <name> add dsh-tip-jar
     "alias": "ghost_trader",        // 必填，化名
     "verified": false,              // 必填；false → 未验证徽章
     "bio": "一句话介绍",
+    "ethics": {                     // 0.1.5 起校验强制
+      "voluntary": true,            // 自愿打赏（禁止付费墙）
+      "paidWall": false             // true → 🔴 付费墙，不予收录
+    },
     "tips": {
       "usdc": "0x…(40位hex)",       // 可选，格式校验
       "fiat": [{ "label": "爱发电", "url": "https://…" }]
@@ -50,6 +59,10 @@ dsh plugin --profile <name> add dsh-tip-jar
     "pluginId": "dsh-tip-jar",
     "name": "打赏罐",
     "contributorId": "ghost-trader",  // 引用 contributors.id
+    "upstream": {                     // 0.1.6：来源声明（防抄袭 L2）
+      "project": "dsh-ssh-ops",
+      "url": "https://github.com/…"
+    },
     "sponsors": [{ "name": "甲方", "message": "标语", "url": "https://…" }]
   }]
 }
@@ -60,7 +73,7 @@ dsh plugin --profile <name> add dsh-tip-jar
 ## 开发
 
 ```bash
-npm test    # 注册表校验测试（红绿）
+npm test    # 注册表/链上/争议/服务四套测试（红绿）
 npm run build  # esbuild：host / remote / client(__ModuleLoader__)
 ```
 

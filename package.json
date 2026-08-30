@@ -26,6 +26,9 @@
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
+    "EMBED.md",
+    "ETHICS.md",
+    "ECOSYSTEM-RISKS.md",
     "LICENSE"
   ],
   "dsh": {
