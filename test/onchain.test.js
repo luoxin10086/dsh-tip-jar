@@ -95,5 +95,28 @@ check('mergeStats 取较大 lastBlock', merged && merged.lastBlock === 0x40)
 // 6. formatUsdc：两位小数
 check('formatUsdc 两位小数', formatUsdc(3) === '$3.00' && formatUsdc(1.234567) === '$1.23')
 
+// 7. 支持人数：按 from 地址去重
+const agg2 = aggregateStats(parseTransferLogs([log1, log2, log3], USDC), CONTRIBUTORS)
+check('supporters 去重统计（2 个不同 from）',
+  agg2.byContributorId['ghost-trader'].supporters === 2)
+const sameFrom = [log1, Object.assign({}, log1, { blockNumber: '0x67' })]
+const agg3 = aggregateStats(parseTransferLogs(sameFrom, USDC), CONTRIBUTORS)
+check('同 from 两次只算 1 个支持者', agg3.byContributorId['ghost-trader'].supporters === 1)
+
+// 8. mergeStats 支持者取并集
+const prevM = {
+  byContributorId: { 'ghost-trader': { count: 1, amountUsdc: 0.5, supporters: 1, fromSet: ['0xaaa'] } },
+  lastBlock: 0x20,
+}
+const nextM = {
+  byContributorId: {
+    'ghost-trader': { count: 2, amountUsdc: 1.25, supporters: 1, fromSet: ['0xbbb'] },
+    'algo-wizard': { count: 1, amountUsdc: 3, supporters: 1, fromSet: ['0xccc'] },
+  },
+  lastBlock: 0x40,
+}
+const mergedM = mergeStats(prevM, nextM)
+check('merge 支持者取并集', mergedM.byContributorId['ghost-trader'].supporters === 2)
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' FAILED')
 process.exit(failures === 0 ? 0 : 1)

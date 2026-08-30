@@ -31,12 +31,17 @@ const sponsorsLoadSchema = z.object({
   data: registrySchema.nullable(),
 })
 
+const statsEntrySchema = z.object({
+  count: z.number(),
+  amountUsdc: z.number(),
+  supporters: z.number().default(0),
+  fromSet: z.array(z.string()).default([]),
+})
+
 const tipStatsSchema = z.object({
   stats: z
     .object({
-      byContributorId: z
-        .record(z.object({ count: z.number(), amountUsdc: z.number() }))
-        .default({}),
+      byContributorId: z.record(statsEntrySchema).default({}),
       lastBlock: z.number().default(0),
     })
     .nullable(),
@@ -88,7 +93,7 @@ const DESCRIPTORS = [
     'saveTipStats',
     z.object({
       stats: z.object({
-        byContributorId: z.record(z.object({ count: z.number(), amountUsdc: z.number() })).default({}),
+        byContributorId: z.record(statsEntrySchema).default({}),
         lastBlock: z.number().default(0),
       }),
     }),

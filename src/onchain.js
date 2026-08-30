@@ -62,23 +62,35 @@ export function aggregateStats(logs, contributors) {
     if (t.blockNumber > lastBlock) lastBlock = t.blockNumber
     const id = addrToId[t.to.toLowerCase()]
     if (!id) continue
-    if (!byContributorId[id]) byContributorId[id] = { count: 0, amountUsdc: 0 }
+    if (!byContributorId[id]) byContributorId[id] = { count: 0, amountUsdc: 0, supporters: 0, fromSet: [] }
     byContributorId[id].count += 1
     byContributorId[id].amountUsdc += t.amountUsdc
+    // 支持人数去重：按 from 地址
+    const from = t.from.toLowerCase()
+    if (byContributorId[id].fromSet.indexOf(from) === -1) {
+      byContributorId[id].fromSet.push(from)
+      byContributorId[id].supporters = byContributorId[id].fromSet.length
+    }
   }
   return { byContributorId, lastBlock }
 }
 
-/** 合并两批统计（累加 count/金额，lastBlock 取大）。 */
+/** 合并两批统计（count/金额累加，支持者取并集，lastBlock 取大）。 */
 export function mergeStats(prev, next) {
   const byContributorId = {}
   const all = {}
   for (const stats of [prev || {}, next || {}]) {
     for (const id of Object.keys(stats.byContributorId || {})) {
       const s = stats.byContributorId[id]
-      if (!all[id]) all[id] = { count: 0, amountUsdc: 0 }
+      if (!all[id]) all[id] = { count: 0, amountUsdc: 0, fromSet: [] }
       all[id].count += s.count || 0
       all[id].amountUsdc += s.amountUsdc || 0
+      if (Array.isArray(s.fromSet)) {
+        for (const f of s.fromSet) {
+          if (all[id].fromSet.indexOf(f) === -1) all[id].fromSet.push(f)
+        }
+      }
+      all[id].supporters = all[id].fromSet.length
     }
   }
   for (const id of Object.keys(all)) byContributorId[id] = all[id]

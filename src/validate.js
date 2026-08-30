@@ -97,6 +97,22 @@ export function validateRegistry(input) {
           }
         })
       }
+      // 防抄袭来源声明：fork/引用其他开源项目时必须声明 upstream（R2 / §5.4）
+      if (p.upstream !== undefined) {
+        if (!isObj(p.upstream)) {
+          errors.push(pp + '.upstream 必须是对象')
+        } else {
+          if (!isStr(p.upstream.repo) || !URL_RE.test(p.upstream.repo)) {
+            errors.push(pp + '.upstream.repo 必须是 http(s) URL（上游仓库）')
+          }
+          if (!isStr(p.upstream.author)) {
+            errors.push(pp + '.upstream.author 缺失（上游作者）')
+          }
+          if (p.upstream.license !== undefined && !isStr(p.upstream.license)) {
+            errors.push(pp + '.upstream.license 必须是字符串')
+          }
+        }
+      }
     })
   }
 

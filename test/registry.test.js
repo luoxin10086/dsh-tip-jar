@@ -64,5 +64,25 @@ badEthics.contributors[0].ethics = { voluntary: 'yes' }
 const r8 = validateRegistry(badEthics)
 check('ethics.voluntary 非布尔被拒', r8.ok === false)
 
+// 9. upstream 合法结构（fork 来源声明）
+const goodUp = JSON.parse(raw)
+goodUp.plugins[0].upstream = { repo: 'https://github.com/original/plugin', author: 'original-author', license: 'MIT' }
+check('upstream 合法结构通过', validateRegistry(goodUp).ok === true)
+
+// 10. upstream.repo 非 URL 应被拒绝
+const badUp1 = JSON.parse(raw)
+badUp1.plugins[0].upstream = { repo: 'not-a-url', author: 'x' }
+check('upstream.repo 非 URL 被拒', validateRegistry(badUp1).ok === false)
+
+// 11. upstream.author 缺失应被拒绝
+const badUp2 = JSON.parse(raw)
+badUp2.plugins[0].upstream = { repo: 'https://github.com/a/b' }
+check('upstream.author 缺失被拒', validateRegistry(badUp2).ok === false)
+
+// 12. upstream 非对象应被拒绝
+const badUp3 = JSON.parse(raw)
+badUp3.plugins[0].upstream = 'MIT'
+check('upstream 非对象被拒', validateRegistry(badUp3).ok === false)
+
 console.log(failures === 0 ? '\nALL PASS' : '\n' + failures + ' FAILED')
 process.exit(failures === 0 ? 0 : 1)
