@@ -76,6 +76,7 @@ copy node_modules/dsh-tip-jar/sponsors.example.json sponsors.json
 
 ```json
 {
+  "schemaVersion": 1,
   "contributors": [{
     "id": "me",
     "alias": "my_name",
