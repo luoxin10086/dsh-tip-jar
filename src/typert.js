@@ -1,0 +1,44 @@
+// dsh-tip-jar/src/typert.js
+// Host 侧 Typert 贡献（./typert 导出）：typert-loader 导入它注册进 ctx.typert，
+// 从而暴露 /api/tipJar/<method> 路由。invocations 复用 remote.js 的描述符。
+import { TYPERT_REMOTE } from './remote.js'
+
+const TYPERT = {
+  package: 'dsh-tip-jar',
+  face: 'host',
+  schemas: [],
+  invocations: TYPERT_REMOTE.descriptors,
+  model: {
+    events: [],
+    objects: [],
+    services: [
+      {
+        key: 'tipJar',
+        exportName: 'TipJarService',
+        description: 'Contributor tip jar registry: read and validate sponsors.json, expose sponsor channels to the client.',
+        summary: 'Tip jar sponsor registry (USDC / fiat / subscription / sponsor slots).',
+        tags: [],
+        jsDoc: '/** Contributor tip jar registry. */',
+        members: [
+          {
+            kind: 'method',
+            name: 'listSponsors',
+            signature: 'async listSponsors(request: TipJarListSponsorsRequest): Promise<TipJarListSponsorsResult>',
+          },
+        ],
+        types: [
+          {
+            name: 'TipJarListSponsorsRequest',
+            declaration: 'export interface TipJarListSponsorsRequest {}',
+          },
+          {
+            name: 'TipJarListSponsorsResult',
+            declaration: 'export type TipJarListSponsorsResult = TipJarResult<{ ok: boolean; errors: string[]; data: TipJarRegistry | null }>',
+          },
+        ],
+      },
+    ],
+  },
+}
+
+export { TYPERT, TYPERT as default }

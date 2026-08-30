@@ -1,0 +1,69 @@
+// dsh-tip-jar/src/remote.js
+// Typert Remote 描述：Host 与 Client 共享的 RPC 契约。
+// 参照 dsh-ssh-ops 模式：本地构造 InvocationDescriptor（def 辅助 + zod 信封），
+// 不依赖协议包的 def 导出（该包只导出 @Remote 装饰器与类型）。
+import { z } from 'zod'
+
+const PACKAGE = 'dsh-tip-jar'
+const NS = 'tipJar'
+
+const errorSchema = z.object({ code: z.string(), message: z.string() })
+function okSchema(value) {
+  return z.object({ ok: z.literal(true), value })
+}
+function resultSchema(value) {
+  return z.union([
+    okSchema(value),
+    z.object({ ok: z.literal(false), error: errorSchema }),
+  ])
+}
+
+const registryEntrySchema = z.record(z.any())
+const registrySchema = z.object({
+  schemaVersion: z.number().optional(),
+  privacyNote: z.string().optional(),
+  contributors: z.array(registryEntrySchema).default([]),
+  plugins: z.array(registryEntrySchema).default([]),
+})
+const sponsorsLoadSchema = z.object({
+  ok: z.boolean(),
+  errors: z.array(z.string()).default([]),
+  data: registrySchema.nullable(),
+})
+
+function def(method, requestSchema, requestType, resultSchema2, resultType) {
+  return {
+    id: PACKAGE + '#' + NS + '/' + method,
+    service: NS,
+    namespace: NS,
+    method,
+    invocation: { kind: 'direct' },
+    parameters: [
+      {
+        name: 'request',
+        wire: 'request',
+        source: 'json',
+        codec: { mode: 'strict', typeSymbol: PACKAGE + '/types#' + requestType, schema: requestSchema },
+      },
+    ],
+    result: {
+      mode: 'strict',
+      typeSymbol: PACKAGE + '/types#' + resultType,
+      schema: resultSchema2,
+    },
+    sourceLocation: { file: 'src/index.js', line: 1, column: 1 },
+  }
+}
+
+const DESCRIPTORS = [
+  def(
+    'listSponsors',
+    z.object({}),
+    'TipJarListSponsorsRequest',
+    resultSchema(sponsorsLoadSchema),
+    'TipJarListSponsorsResult',
+  ),
+]
+
+export const TYPERT_REMOTE = { package: PACKAGE, descriptors: DESCRIPTORS }
+export default TYPERT_REMOTE

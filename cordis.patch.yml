@@ -1,0 +1,17 @@
+# dsh-tip-jar bundle patch: mount the tip jar service as one row in the
+# composition. To enable in a profile:
+#   dsh plugin --profile <name> add dsh-tip-jar
+# or add "dsh-tip-jar" to the profile's dsh.profile.bundles (the package's
+# dsh.bundle.patch declaration applies this file automatically).
+#
+# roots: deployment-local registry locations. The package default is the
+# portable relative 'sponsors.json' (workspace root); this row pins the
+# absolute path for THIS deployment so the registry loads regardless of the
+# fs service cwd.
+- insert:
+    - id: dsh-tip-jar
+      name: 'dsh-tip-jar'
+      config:
+        roots:
+          - 'sponsors.json'
+          - 'D:/tool/claude_code/sponsors.json'

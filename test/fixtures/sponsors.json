@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "privacyNote": "贡献者可仅使用化名（alias），地址公开与否自选；所有信息由贡献者自行声明，未经生态认证前一律标记为未验证。插件不代收任何资金，打赏为纯 P2P 直连。",
+  "contributors": [
+    {
+      "id": "ghost-trader",
+      "alias": "ghost_trader",
+      "verified": false,
+      "bio": "Polymarket BTC 5m 策略作者（化名示例，请替换为你的声明）",
+      "tips": {
+        "usdc": "0x1111111111111111111111111111111111111111",
+        "chains": ["polygon"],
+        "fiat": [
+          { "label": "爱发电", "url": "https://afdian.com/a/ghost-trader" },
+          { "label": "GitHub Sponsors", "url": "https://github.com/sponsors/ghost-trader" }
+        ]
+      },
+      "subscriptions": [
+        { "label": "Patreon", "url": "https://patreon.com/ghost-trader" }
+      ]
+    },
+    {
+      "id": "algo-wizard",
+      "alias": "algo_wizard",
+      "verified": false,
+      "bio": "订单流信号工具作者（化名示例）",
+      "tips": {
+        "usdc": "0x2222222222222222222222222222222222222222",
+        "chains": ["polygon", "ethereum"],
+        "fiat": []
+      },
+      "subscriptions": []
+    }
+  ],
+  "plugins": [
+    {
+      "pluginId": "trd-1",
+      "name": "AI 交易助手",
+      "contributorId": "ghost-trader",
+      "sponsors": [
+        {
+          "name": "示例交易所赞助",
+          "message": "全球最大合约交易所（示例赞助位，联系作者洽谈）",
+          "url": "https://example.com/sponsor"
+        }
+      ]
+    },
+    {
+      "pluginId": "pm-trading-assistant",
+      "name": "示例插件 B",
+      "contributorId": "algo-wizard",
+      "sponsors": []
+    }
+  ]
+}
