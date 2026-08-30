@@ -94,7 +94,6 @@ function SponsorCenter(props) {
   const ctx = props.ctx
   const [state, setState] = useState(null)
   const [tipState, setTipState] = useState({ stats: null, present: false, paused: false })
-  const [disputedState, setDisputedState] = useState(null)
   const dataRef = useRef(null)
   const tipRef = useRef({ stats: null, present: false })
 
@@ -114,10 +113,7 @@ function SponsorCenter(props) {
           setTipState({ stats: r.stats, present: !!r.present, paused: false })
         }
       } catch (e) { /* 统计暂不可用，轮询会重试 */ }
-      try {
-        const r = await api.disputed()
-        if (alive && r && r.disputed) setDisputedState(r.disputed)
-      } catch (e) { /* 争议状态暂不可用 */ }
+      // v1.1-B：举报只记录、不自动标记 —— 不再拉取/渲染 disputed 徽章（见 ECOSYSTEM-RISKS §5.1-B）
     }
     load()
     return function () { alive = false }
@@ -188,17 +184,10 @@ function SponsorCenter(props) {
     } else {
       ethicsBadge = h('span', { className: 'sps-badge-un', title: '未声明自愿性，请自行判断（规范见 ETHICS.md）' }, '⚪ 未确认自愿性')
     }
-    const dsp = disputedState && disputedState[c.id]
-    let disputedBadge = null
-    if (dsp) {
-      const detail = Object.keys(dsp).map(function (cat) { return cat + '×' + dsp[cat] }).join('，')
-      disputedBadge = h('span', { className: 'sps-badge-ds', title: '收到举报：' + detail + '（≥3 同类来源触发，仅供参考）' }, '🟡 有争议')
-    }
     const head = h('div', { className: 'sps-card-head' },
       h('span', { className: 'sps-alias' }, '@' + c.alias),
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
       ethicsBadge,
-      disputedBadge,
       h(ReportButton, { api: api, targetId: c.id }),
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]

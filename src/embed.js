@@ -112,8 +112,8 @@ function ReportButton(props) {
   const [category, setCategory] = useState('fake')
   const [done, setDone] = useState(false)
   const h = createElement
-  if (done) return h('span', { className: 'sps-report-ok' }, '已收到举报（匿名）')
-  if (!open) return h('button', { className: 'sps-report-btn', title: '匿名举报，同类举报≥3 将标记为有争议', onClick: function () { setOpen(true) } }, '举报')
+  if (done) return h('span', { className: 'sps-report-ok' }, '已收到举报（匿名，仅作记录）')
+  if (!open) return h('button', { className: 'sps-report-btn', title: '匿名提交举报，仅作记录供生态核实参考（不自动标记）', onClick: function () { setOpen(true) } }, '举报')
   return h('span', { className: 'sps-report-form' },
     h('select', { className: 'sps-report-select', value: category, onChange: function (e) { setCategory(e.target.value) } },
       REPORT_CATEGORIES.map(function (c) { return h('option', { key: c.value, value: c.value }, c.label) })),

@@ -125,10 +125,12 @@ class TipJarService extends TypertRemoteService {
     }
   }
 
+  // v1.1-B：自动标记已移除 —— 本方法保留为"人工/作者可见"的举报计数数据
+  // （UI 不再消费；将来 v1.2 人工核实流程从这些计数启用标记，见 ECOSYSTEM-RISKS §5.1-B）
   async disputed() {
     try {
       const reports = await this.readReports()
-      // 有限期：30 天无新举报自动消退（v1.1 校准，ECOSYSTEM-RISKS §5.2）
+      // 有限期：30 天窗口（v1.1 校准，供人工核实阶段使用）
       const DAY = 24 * 3600 * 1000
       const disputed = computeDisputed(reports, 3, DAY, 30 * DAY, Date.now())
       return { ok: true, value: { disputed } }
