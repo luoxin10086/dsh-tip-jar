@@ -16,7 +16,6 @@ Pure P2P, zero custody, privacy by default (pseudonymous + unverified badges).
 - **Safe degradation**: missing/corrupt registry or invalid addresses → empty state or error, never a crash
 - **On-chain radar** (0.1.5): watches Polygon USDC `Transfer` events (public RPCs, 60s poll, 1-block confirm, since install), aggregates per-contributor amount / count / deduped supporter count, and shows a thank-you wall
 - **Ethics badges** (0.1.5): 🟢 voluntary / ⚪ unconfirmed / 🔴 paywall — driven by the registry `ethics` declaration, validation enforced (voluntary + no paywall is a listing requirement)
-- **Report (record-only)** (0.1.6, v1.1-B downgrade): every contributor card has a Report button (5 categories: fake / copycat / phishing / paywall / other); anonymous submissions are recorded only — **no automatic badges** (governance = disclosure, not adjudication)
 - **Upstream declaration** (0.1.6): plugin entries can declare an `upstream` project (attribution guard: copying code is licensed, impersonation is not — spec §5.4)
 - **Embeddable component** (0.1.6): `TipJarEmbed` — other plugins can add a tip entry with one line (see `EMBED.md`)
 

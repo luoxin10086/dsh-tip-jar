@@ -9,11 +9,11 @@ dsh-tip-jar 除了独立赞助面板（「支持」Tab / 设置页），还提�
 
 ```
 🤝 AI 交易助手
-支持作者 @ghost_trader [🟢 自愿打赏] · USDC 0x1111…1111 · $3.00 / 2 笔 [举报]
+支持作者 @ghost_trader [🟢 自愿打赏] · USDC 0x1111…1111 · $3.00 / 2 笔
 ```
 
 - 读取注册表（sponsors.json）中 `pluginId` 对应的插件 → 贡献者
-- 展示：伦理徽章（自愿/未确认/付费墙）、USDC 短地址、链上雷达统计、举报按钮
+- 展示：伦理徽章（自愿/未确认/付费墙）、USDC 短地址、链上雷达统计
 - 未登记 → 空态提示；数据不可用 → 降级提示，不崩溃
 
 ## 接入方式（一行）
@@ -77,5 +77,5 @@ slots.inject('conversation.session.header.actions', function () {
 ## 更多
 
 - 伦理规范：`ETHICS.md`（自愿打赏）
-- 治理机制：`ECOSYSTEM-RISKS.md`（举报/争议/防抄袭）
+- 治理机制：`ECOSYSTEM-RISKS.md`（冒名防欺诈/署名权守门）
 - 注册表 Schema：`PROJECT.md` §4

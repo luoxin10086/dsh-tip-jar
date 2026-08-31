@@ -68,29 +68,6 @@ function createTipJarApi(ctx) {
   })
 }
 
-// 设备匿名编号：同一设备同一编号（防同一人反复刷举报）
-function getAnonId() {
-  try {
-    const key = 'dsh-tip-jar-anon'
-    let id = window.localStorage.getItem(key)
-    if (!id) {
-      id = Math.random().toString(36).slice(2) + Date.now().toString(36)
-      window.localStorage.setItem(key, id)
-    }
-    return id
-  } catch (e) {
-    return Math.random().toString(36).slice(2)
-  }
-}
-
-const REPORT_CATEGORIES = [
-  { value: 'fake', label: '虚假贡献（收钱不交付）' },
-  { value: 'copycat', label: '冒领/抄袭（伪冒他人作品）' },
-  { value: 'phishing', label: '钓鱼链接' },
-  { value: 'paidwall', label: '强制付费/付费墙' },
-  { value: 'other', label: '其他' },
-]
-
 // ── resolveEmbed：纯数据组装（红绿可测）───────────────────────────────────
 // 输入注册表 + pluginId + 链上统计 → 输出嵌入组件的渲染数据或降级状态
 export function resolveEmbed(sponsors, pluginId, stats) {
@@ -101,26 +78,6 @@ export function resolveEmbed(sponsors, pluginId, stats) {
   if (!contributor) return { status: 'no-contributor' }
   const stat = stats && stats.byContributorId && stats.byContributorId[contributor.id] ? stats.byContributorId[contributor.id] : null
   return { status: 'ok', plugin, contributor, stat }
-}
-
-// ── ReportButton（举报通道，匿名 + 必选分类）───────────────────────────────
-
-function ReportButton(props) {
-  const api = props.api
-  const targetId = props.targetId
-  const [open, setOpen] = useState(false)
-  const [category, setCategory] = useState('fake')
-  const [done, setDone] = useState(false)
-  const h = createElement
-  if (done) return h('span', { className: 'sps-report-ok' }, '已收到举报（匿名，仅作记录）')
-  if (!open) return h('button', { className: 'sps-report-btn', title: '匿名提交举报，仅作记录供生态核实参考（不自动标记）', onClick: function () { setOpen(true) } }, '举报')
-  return h('span', { className: 'sps-report-form' },
-    h('select', { className: 'sps-report-select', value: category, onChange: function (e) { setCategory(e.target.value) } },
-      REPORT_CATEGORIES.map(function (c) { return h('option', { key: c.value, value: c.value }, c.label) })),
-    h('button', { className: 'sps-report-btn', onClick: function () {
-      api.reportContributor(targetId, category, getAnonId(), '').then(function () { setDone(true) }).catch(function () { setDone(true) })
-    } }, '提交'),
-    h('button', { className: 'sps-report-btn', onClick: function () { setOpen(false) } }, '取消'))
 }
 
 // ── TipJarEmbed（嵌入式打赏组件：其他插件一行接入）──────────────────────────
@@ -160,12 +117,11 @@ function TipJarEmbed(props) {
     h('span', { className: 'sps-tip-alias' }, '支持作者 @' + c.alias),
     ethicsBadge,
     addr ? h('span', { className: 'sps-num' }, ' · USDC ' + addr.slice(0, 6) + '…' + addr.slice(-4)) : null,
-    stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null,
-    h(ReportButton, { api: api, targetId: c.id }))
+    stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null)
 
   return h('div', { className: 'sps-toolcard' },
     h('div', { className: 'sps-tool-head' }, '🤝 ' + (plugin.name || pluginId)),
     line)
 }
 
-export { TipJarEmbed, ReportButton, TipJarApi, createTipJarApi, getAnonId, REPORT_CATEGORIES }
+export { TipJarEmbed, TipJarApi, createTipJarApi }

@@ -50,10 +50,6 @@ const tipStatsSchema = z.object({
 
 const saveTipStatsSchema = z.object({ saved: z.boolean() })
 
-const reportReceivedSchema = z.object({ received: z.boolean() })
-
-const disputedSchema = z.object({ disputed: z.record(z.record(z.number())).default({}) })
-
 function def(method, requestSchema, requestType, resultSchema2, resultType) {
   return {
     id: PACKAGE + '#' + NS + '/' + method,
@@ -104,25 +100,6 @@ const DESCRIPTORS = [
     'TipJarSaveTipStatsRequest',
     resultSchema(saveTipStatsSchema),
     'TipJarSaveTipStatsResult',
-  ),
-  def(
-    'reportContributor',
-    z.object({
-      targetId: z.string().min(1),
-      category: z.enum(['fake', 'copycat', 'phishing', 'paidwall', 'other']),
-      anonId: z.string().min(1),
-      note: z.string().max(500).optional(),
-    }),
-    'TipJarReportContributorRequest',
-    resultSchema(reportReceivedSchema),
-    'TipJarReportContributorResult',
-  ),
-  def(
-    'disputed',
-    z.object({}),
-    'TipJarDisputedRequest',
-    resultSchema(disputedSchema),
-    'TipJarDisputedResult',
   ),
 ]
 

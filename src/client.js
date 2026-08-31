@@ -4,7 +4,7 @@
 import { createElement, useState, useEffect, useRef } from 'react'
 import { TYPERT_REMOTE } from './remote.js'
 import { buildGetLogsRequest, parseTransferLogs, aggregateStats, mergeStats, formatUsdc } from './onchain.js'
-import { TipJarEmbed, ReportButton, createTipJarApi } from './embed.js'
+import { TipJarEmbed, createTipJarApi } from './embed.js'
 
 // 链上到账雷达配置（浏览器友好公共 RPC，按序回退；原生 USDC 合约）
 const RPC_URLS = [
@@ -56,12 +56,6 @@ const CSS =
   '.sps-badge-pw{font-size:11px;color:var(--dsw-alias-state-error-primary);border:1px solid var(--dsw-alias-state-error-primary);border-radius:10px;padding:0 8px}' +
   '.sps-badge-un{font-size:11px;color:var(--dsw-alias-label-secondary);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:0 8px}' +
   '.sps-badge-ds{font-size:11px;color:var(--dsw-alias-state-warn-primary);border:1px solid var(--dsw-alias-state-warn-primary);border-radius:10px;padding:0 8px}' +
-  '.sps-report{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dsw-alias-label-secondary)}' +
-  '.sps-report-btn{background:none;border:1px solid var(--dsw-alias-border-l1);border-radius:6px;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:11px;padding:2px 8px}' +
-  '.sps-report-btn:hover{color:var(--dsw-alias-state-error-primary);border-color:var(--dsw-alias-state-error-primary)}' +
-  '.sps-report-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}' +
-  '.sps-report-select{font-size:11px;background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:6px;color:var(--dsw-alias-label-primary);padding:2px 6px}' +
-  '.sps-report-ok{font-size:11px;color:var(--dsw-alias-state-success-primary)}' +
   '.sps-bio{font-size:12px;color:var(--dsw-alias-label-secondary)}' +
   '.sps-addr-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}' +
   '.sps-label{font-size:11px;color:var(--dsw-alias-label-secondary);text-transform:uppercase;letter-spacing:.04em}' +
@@ -188,7 +182,6 @@ function SponsorCenter(props) {
       h('span', { className: 'sps-alias' }, '@' + c.alias),
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
       ethicsBadge,
-      h(ReportButton, { api: api, targetId: c.id }),
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
     // G4 大额打赏提醒（R1④ / R10②）：未验证贡献者明示核实义务
@@ -362,12 +355,8 @@ export default {
 
     ctx.effect(() => insertStyles(CSS))
 
-    // 入口 1：会话视图 Tab「支持」
-    slots.inject('conversation.view', function () {
-      return slots.register(
-        { name: 'conversation.view', id: 'sponsors-center', order: 20, label: '支持' },
-        function () { return createElement(SponsorCenter, { api: api, ctx: ctx }) })
-    })
+    // 入口 1（已移除）：会话视图 Tab「支持」—— 打赏入口已收进各插件的「设置→关于」，
+    // 不再单独占用一个会话页签（SponsorCenter 仍可在设置页入口使用）。
     // 入口 2：设置页「支持贡献者」
     slots.inject('settings.section', function () {
       return slots.register(

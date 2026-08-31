@@ -3,20 +3,15 @@
 import { Service } from '@deepseek-ai/cordis'
 import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { validateRegistry } from './validate.js'
-import { computeDisputed } from './reports.js'
 
 // 默认查找工作区根目录的 sponsors.json；可通过插件配置 config.roots 覆盖
 const DEFAULT_ROOTS = ['sponsors.json']
 // 链上统计持久化文件候选（部署本地路径由 row config 补充）
 const DEFAULT_STATS_FILES = ['.tip-jar-stats.json']
-// 举报记录持久化文件候选
-const DEFAULT_REPORTS_FILES = ['report.jsonl']
 
 function fail(code, message) {
   return { code, message }
 }
-
-const REPORT_CATEGORIES = ['fake', 'copycat', 'phishing', 'paidwall', 'other']
 
 class TipJarService extends TypertRemoteService {
   static inject = ['fs']
@@ -26,7 +21,6 @@ class TipJarService extends TypertRemoteService {
     this.config = {
       roots: DEFAULT_ROOTS,
       statsFiles: DEFAULT_STATS_FILES,
-      reportsFiles: DEFAULT_REPORTS_FILES,
       ...config,
     }
   }
@@ -98,88 +92,6 @@ class TipJarService extends TypertRemoteService {
       } catch (e) { lastError = e /* try next candidate */ }
     }
     throw lastError || new Error('所有统计文件路径均不可写: ' + this.config.statsFiles.join(', '))
-  }
-
-  async reportContributor(request) {
-    const targetId = request && request.targetId
-    const category = request && request.category
-    const anonId = request && request.anonId
-    if (!targetId || !category || !anonId) {
-      return { ok: false, error: fail('tip-jar-bad-report', 'targetId/category/anonId 必填') }
-    }
-    if (REPORT_CATEGORIES.indexOf(category) === -1) {
-      return { ok: false, error: fail('tip-jar-bad-report', '未知举报分类: ' + category) }
-    }
-    const record = {
-      ts: Date.now(),
-      targetId: String(targetId),
-      category: String(category),
-      anonId: String(anonId),
-      note: request.note ? String(request.note).slice(0, 500) : '',
-    }
-    try {
-      await this.appendReport(record)
-      return { ok: true, value: { received: true } }
-    } catch (error) {
-      return { ok: false, error: fail('tip-jar-report-write-failed', error && error.message ? error.message : String(error)) }
-    }
-  }
-
-  // v1.1-B：自动标记已移除 —— 本方法保留为"人工/作者可见"的举报计数数据
-  // （UI 不再消费；将来 v1.2 人工核实流程从这些计数启用标记，见 ECOSYSTEM-RISKS §5.1-B）
-  async disputed() {
-    try {
-      const reports = await this.readReports()
-      // 有限期：30 天窗口（v1.1 校准，供人工核实阶段使用）
-      const DAY = 24 * 3600 * 1000
-      const disputed = computeDisputed(reports, 3, DAY, 30 * DAY, Date.now())
-      return { ok: true, value: { disputed } }
-    } catch (error) {
-      return { ok: false, error: fail('tip-jar-disputed-failed', error && error.message ? error.message : String(error)) }
-    }
-  }
-
-  async readReports() {
-    const fs = this.ctx.fs
-    if (!fs) return []
-    const out = []
-    for (const f of this.config.reportsFiles) {
-      try {
-        const target = await fs.resolve(f, {})
-        const text = await fs.readText(target)
-        for (const line of text.split(/\r?\n/)) {
-          const l = line.trim()
-          if (!l) continue
-          try { out.push(JSON.parse(l)) } catch (e) { /* skip bad line */ }
-        }
-      } catch (e) { /* try next candidate */ }
-    }
-    return out
-  }
-
-  async appendReport(record) {
-    const fs = this.ctx.fs
-    if (!fs) throw new Error('fs 服务不可用')
-    let lastError = null
-    for (const f of this.config.reportsFiles) {
-      try {
-        // 读-写锚定同一候选文件：读该文件已有记录 → 合并新记录 → 写回该文件
-        const target = await fs.resolve(f, {})
-        let existing = []
-        try {
-          const text = await fs.readText(target)
-          for (const line of text.split(/\r?\n/)) {
-            const l = line.trim()
-            if (!l) continue
-            try { existing.push(JSON.parse(l)) } catch (e) { /* skip bad line */ }
-          }
-        } catch (e) { /* 新文件：从空开始 */ }
-        existing.push(record)
-        await fs.writeText(target, existing.map(function (r) { return JSON.stringify(r) }).join('\n'))
-        return
-      } catch (e) { lastError = e /* try next candidate */ }
-    }
-    throw lastError || new Error('所有举报文件路径均不可写: ' + this.config.reportsFiles.join(', '))
   }
 
   async loadRegistry() {
