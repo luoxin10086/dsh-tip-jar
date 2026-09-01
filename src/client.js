@@ -185,9 +185,9 @@ function SponsorCenter(props) {
       ethicsBadge,
       c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
     const rows = [head]
-    // G4 大额打赏提醒（R1④ / R10②）：未验证贡献者明示核实义务
+    // G4 大额打赏提醒（R1④ / R10②）：未验证贡献者明示核实义务（简短）
     if (!c.verified) {
-      rows.push(h('div', { className: 'sps-note' }, '⚠️ 未验证：大额打赏前请自行核实其身份与承诺（地址可链上追溯，但平台不担保交付）。'))
+      rows.push(h('div', { className: 'sps-note' }, '未验证 · 大额打赏前请自行核实'))
     }
     const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
     if (tipEntry) {
@@ -220,9 +220,7 @@ function SponsorCenter(props) {
         h('input', { className: 'sps-addr', readOnly: true, defaultValue: addr, title: '点击全选后 Ctrl+C 复制', onFocus: function (e) { e.target.select() } }),
         copyBtn)
       const qr = h('img', { className: 'sps-qr', src: 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(addr), alt: 'USDC ' + short + ' 收款二维码' })
-      rows.push(h('div', { className: 'sps-qr-row' }, qr, h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-        addrRow,
-        h('div', { className: 'sps-note' }, '用钱包扫二维码或复制地址，在 Polygon 网络转账 USDC（纯 P2P，平台不代收）。'))))
+      rows.push(h('div', { className: 'sps-qr-row' }, qr, addrRow))
     }
     const fiat = (c.tips && c.tips.fiat && c.tips.fiat.length)
       ? h('div', { className: 'sps-links' }, c.tips.fiat.map(function (f) {
@@ -266,7 +264,7 @@ function SponsorCenter(props) {
   }
   tipEntries.sort(function (a, b) { return b.amountUsdc - a.amountUsdc })
   const wall = h('div', { className: 'sps-section' },
-    h('div', { className: 'sps-sec-title' }, '🎖 致谢墙（链上真实到账 · 1 区块确认）'),
+    h('div', { className: 'sps-sec-title' }, '🎖 致谢墙'),
     tipEntries.length
       ? tipEntries.map(function (t, i) {
           return h('div', { key: t.id, className: 'sps-tip-line' },
@@ -276,17 +274,16 @@ function SponsorCenter(props) {
             h('span', { className: 'sps-tip-count' }, t.count + ' 笔'))
         })
       : h('div', { className: 'sps-note' }, tipState.paused
-          ? '链上统计暂停（RPC 不可达），稍后自动重试。'
-          : '暂无链上到账。实时监听中（从安装时刻起算，约 60 秒刷新）。'))
+          ? '链上统计暂停，稍后重试。'
+          : '暂无链上到账，实时监听中。'))
 
   return h('div', { className: 'sps-root' },
     h('div', { className: 'sps-title' }, '🤝 支持贡献者'),
-    h('div', { className: 'sps-note' }, d.privacyNote || '所有信息由贡献者自行声明，未经认证前标记为未验证。'),
     cards,
     wall,
     sponsorSec,
-    // G3 免责声明（R5①）：平台不代收、不托管、不担保
-    h('div', { className: 'sps-note' }, '免责声明：本插件不代收、不托管、不担保任何打赏款项；打赏为受益者与贡献者之间的纯 P2P 行为，收款用途与交付承诺由贡献者自行负责。'))
+    // G3 免责声明（R5①）：平台不代收、不托管、不担保（简短）
+    h('div', { className: 'sps-note' }, '纯 P2P 直连 · 平台不代收、不担保'))
 }
 
 // ── ToolCard ────────────────────────────────────────────────────────────────
