@@ -89,6 +89,7 @@ function TipJarEmbed(props) {
   const pluginId = props.pluginId
   const [data, setData] = useState(null)
   const [tipState, setTipState] = useState({ stats: null })
+  const [copied, setCopied] = useState(false)
   const h = createElement
 
   useEffect(function () {
@@ -113,10 +114,27 @@ function TipJarEmbed(props) {
     : (eth.voluntary === true ? h('span', { className: 'sps-badge-vol' }, '🟢 自愿打赏') : h('span', { className: 'sps-badge-un' }, '⚪ 未确认'))
   const addr = c.tips && c.tips.usdc
 
+  // 不展示地址文本/二维码（乱码无用），只给复制按钮：一键复制完整地址
+  const copyBtn = addr
+    ? h('button', {
+        className: 'sps-btn',
+        title: copied ? '已复制 ✓' : '复制地址',
+        onClick: function () {
+          try {
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(addr).catch(function () {})
+            }
+          } catch (e) { /* fallback */ }
+          setCopied(true)
+          setTimeout(function () { setCopied(false) }, 1500)
+        },
+      }, copied ? '✓ 已复制' : '📋 复制地址')
+    : null
+
   const line = h('div', { className: 'sps-tool-support' },
     h('span', { className: 'sps-tip-alias' }, '支持作者 @' + c.alias),
     ethicsBadge,
-    addr ? h('span', { className: 'sps-num' }, ' · USDC ' + addr.slice(0, 6) + '…' + addr.slice(-4)) : null,
+    copyBtn,
     stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null)
 
   return h('div', { className: 'sps-toolcard' },
