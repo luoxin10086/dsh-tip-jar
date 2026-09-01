@@ -137,9 +137,16 @@ function TipJarEmbed(props) {
     copyBtn,
     stat ? h('span', { className: 'sps-tip-amount' }, ' · ' + formatUsdc(stat.amountUsdc) + ' / ' + stat.count + ' 笔') : null)
 
+  // 收款二维码（USDC 地址，尺寸紧凑）
+  const qr = addr
+    ? h('div', { style: { display: 'flex', justifyContent: 'center', paddingTop: 6 } },
+        h('img', { className: 'sps-qr', src: 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(addr), alt: 'USDC 收款二维码' }))
+    : null
+
   return h('div', { className: 'sps-toolcard' },
     h('div', { className: 'sps-tool-head' }, '🤝 ' + (plugin.name || pluginId)),
-    line)
+    line,
+    qr)
 }
 
 export { TipJarEmbed, TipJarApi, createTipJarApi }
