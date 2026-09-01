@@ -35,7 +35,8 @@
     "LICENSE",
     "sponsors.example.json",
     "QUICKSTART.md",
-    "assets"
+    "assets",
+    "CONTRIBUTING.md"
   ],
   "dsh": {
     "bundle": {
