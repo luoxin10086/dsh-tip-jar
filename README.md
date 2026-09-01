@@ -7,17 +7,6 @@
 A tip jar for DeepSeek Harness: contributors declare their support channels once;
 users tip from a sponsor-center panel, a settings page, or tool-card credits.
 
-## ☕ 支持作者
-
-如果打赏罐帮你省了事，欢迎请作者喝杯咖啡 —— 完全自愿，先谢谢啦 🙏
-
-| 链 | 地址 | 二维码 |
-|----|------|--------|
-| **Bitcoin** | `bc1pt75jhhnxfxvjsez5qmnjrete9us256la39fardmrqlq9kgy98a7q3tfd7g` | ![BTC](assets/btc.png) |
-| **Ethereum / EVM** | `0xcea407b16bc7ddd308d74330bdc271d490835123` | ![ETH](assets/eth.png) |
-
-> 直接转账即可（链上到账、零中间商）。打赏罐作者不通过插件页面收打赏 —— 插件页面只服务第三方贡献者；这是作者的个人支持入口。
-
 ## 功能
 
 - **赞助中心**：会话视图「支持」Tab + 设置页「支持贡献者」页
@@ -102,6 +91,16 @@ dsh plugin --profile <name> add dsh-tip-jar
 npm test    # 注册表/链上/争议/服务四套测试（红绿）
 npm run build  # esbuild：host / remote / client(__ModuleLoader__)
 ```
+
+## ☕ 支持作者
+
+如果打赏罐帮你省了事，欢迎请作者喝杯咖啡 —— 完全自愿，先谢谢啦 🙏
+
+| 链 | 地址 | 二维码 |
+|----|------|--------|
+| **Ethereum / EVM** | `0xcea407b16bc7ddd308d74330bdc271d490835123` | ![ETH](assets/eth.png) |
+
+> 直接转账即可（链上到账、零中间商）。打赏罐作者不通过插件页面收打赏 —— 插件页面只服务第三方贡献者；这是作者的个人支持入口。
 
 ## License
 
