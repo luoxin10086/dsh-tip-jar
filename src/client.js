@@ -252,7 +252,7 @@ function SponsorCenter(props) {
         }))
     : null
 
-  // 🎖 致谢墙：链上真实到账排行（匿名统计）
+  // 🎖 致谢墙：仅在有链上到账时展示（无数据则整体隐藏）
   const tipEntries = []
   if (tipState.stats && tipState.stats.byContributorId) {
     for (const id of Object.keys(tipState.stats.byContributorId)) {
@@ -263,19 +263,17 @@ function SponsorCenter(props) {
     }
   }
   tipEntries.sort(function (a, b) { return b.amountUsdc - a.amountUsdc })
-  const wall = h('div', { className: 'sps-section' },
-    h('div', { className: 'sps-sec-title' }, '🎖 致谢墙'),
-    tipEntries.length
-      ? tipEntries.map(function (t, i) {
+  const wall = tipEntries.length
+    ? h('div', { className: 'sps-section' },
+        h('div', { className: 'sps-sec-title' }, '🎖 致谢墙'),
+        tipEntries.map(function (t, i) {
           return h('div', { key: t.id, className: 'sps-tip-line' },
             h('span', { className: 'sps-tip-rank' }, String(i + 1) + '. '),
             h('span', { className: 'sps-tip-alias' }, '@' + t.alias),
             h('span', { className: 'sps-tip-amount' }, formatUsdc(t.amountUsdc)),
             h('span', { className: 'sps-tip-count' }, t.count + ' 笔'))
-        })
-      : h('div', { className: 'sps-note' }, tipState.paused
-          ? '链上统计暂停，稍后重试。'
-          : '暂无链上到账，实时监听中。'))
+        }))
+    : null
 
   return h('div', { className: 'sps-root' },
     h('div', { className: 'sps-title' }, '🤝 支持贡献者'),
