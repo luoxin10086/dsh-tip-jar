@@ -182,13 +182,8 @@ function SponsorCenter(props) {
     const head = h('div', { className: 'sps-card-head' },
       h('span', { className: 'sps-alias' }, '@' + c.alias),
       h('span', { className: c.verified ? 'sps-badge-ok' : 'sps-badge' }, c.verified ? '已认证' : '未验证'),
-      ethicsBadge,
-      c.bio ? h('span', { className: 'sps-bio' }, c.bio) : null)
+      ethicsBadge)
     const rows = [head]
-    // G4 大额打赏提醒（R1④ / R10②）：未验证贡献者明示核实义务（简短）
-    if (!c.verified) {
-      rows.push(h('div', { className: 'sps-note' }, '未验证 · 大额打赏前请自行核实'))
-    }
     const tipEntry = tipState.stats && tipState.stats.byContributorId && tipState.stats.byContributorId[c.id]
     if (tipEntry) {
       rows.push(h('div', { className: 'sps-tip-line' },
