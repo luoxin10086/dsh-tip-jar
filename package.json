@@ -34,7 +34,8 @@
     "ECOSYSTEM-RISKS.md",
     "LICENSE",
     "sponsors.example.json",
-    "QUICKSTART.md"
+    "QUICKSTART.md",
+    "assets"
   ],
   "dsh": {
     "bundle": {
@@ -61,6 +62,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.24.2",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1"
   },
   "scripts": {

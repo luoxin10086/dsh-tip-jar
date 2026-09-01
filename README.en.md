@@ -6,6 +6,19 @@ plugins. Contributors declare their support channels once in `sponsors.json`
 tap from a sponsor-center panel, a settings page, or tool-card credits.
 Pure P2P, zero custody, privacy by default (pseudonymous + unverified badges).
 
+## ☕ Support the author
+
+If the tip jar saved you some effort, a coffee is very welcome — fully voluntary, thanks! 🙏
+
+| Chain | Address | QR |
+|-------|---------|----|
+| **Bitcoin** | `bc1pt75jhhnxfxvjsez5qmnjrete9us256la39fardmrqlq9kgy98a7q3tfd7g` | ![BTC](assets/btc.png) |
+| **Ethereum / EVM** | `0xcea407b16bc7ddd308d74330bdc271d490835123` | ![ETH](assets/eth.png) |
+
+> Direct transfer, on-chain settlement, zero middleman. The tip-jar author does
+> not collect via the plugin page — that page serves third-party contributors
+> only; this is the author's personal support entry.
+
 ## Features
 
 - **Sponsor center**: conversation "Support" tab + settings "Support contributors" page
