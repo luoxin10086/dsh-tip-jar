@@ -25,8 +25,9 @@ export function validateRegistry(input) {
     errors.push('schemaVersion 必须为 1')
   }
 
-  if (!isArr(input.contributors) || input.contributors.length === 0) {
-    errors.push('contributors 必须是非空数组')
+  // 允许空 contributors：打赏罐是工具，初始/过渡状态无贡献者是合法状态（页面显示空态）
+  if (!isArr(input.contributors)) {
+    errors.push('contributors 必须是数组')
   } else {
     const seen = new Set()
     input.contributors.forEach(function (c, i) {

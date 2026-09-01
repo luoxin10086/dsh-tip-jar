@@ -17,21 +17,6 @@
         ]
       },
       "subscriptions": []
-    },
-    {
-      "id": "dsh-tip-jar",
-      "alias": "luoxin10086",
-      "verified": false,
-      "bio": "dsh-tip-jar（打赏罐）作者 —— 可选保留：如果你觉得打赏罐帮你收到了打赏，欢迎支持工具作者（完全自愿，可随时删除本条目）",
-      "ethics": { "voluntary": true, "paidWall": false },
-      "tips": {
-        "usdc": "0xcea407b16bc7ddd308d74330bdc271d490835123",
-        "chains": ["polygon"],
-        "fiat": [
-          { "label": "GitHub Sponsors", "url": "https://github.com/sponsors/luoxin10086" }
-        ]
-      },
-      "subscriptions": []
     }
   ],
   "plugins": [

@@ -30,8 +30,6 @@ copy node_modules/dsh-tip-jar/sponsors.example.json sponsors.json
 # 4. Restart the Harness → your tip entry appears in the "Support" tab
 ```
 
-> 💡 The `dsh-tip-jar` author entry in the example file is **optional**: if the tip jar helped you receive tips, feel free to keep it to support the tool author (fully voluntary, delete anytime).
-
 > 📖 Full step-by-step guide (field reference / verification / FAQ): **[QUICKSTART.md](QUICKSTART.md)**.
 
 ## Install (persistent)

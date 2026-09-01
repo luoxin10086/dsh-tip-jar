@@ -33,8 +33,6 @@ copy node_modules/dsh-tip-jar/sponsors.example.json sponsors.json
 # 4. 重启 Harness → 会话「支持」Tab 出现你的打赏入口
 ```
 
-> 💡 示例文件里的 `dsh-tip-jar` 作者条目是**可选**的：觉得打赏罐帮你收到了打赏，欢迎保留它支持工具作者（完全自愿，可随时删除）。
-
 > 📖 完整的分步指南（字段说明 / 验证 / FAQ）见 **[QUICKSTART.md](QUICKSTART.md)**。
 
 ## 安装（常驻）
