@@ -1,4 +1,4 @@
-# dsh-tip-jar bundle patch: mount the tip jar service as one row in the
+﻿# dsh-tip-jar bundle patch: mount the tip jar service as one row in the
 # composition. To enable in a profile:
 #   dsh plugin --profile <name> add dsh-tip-jar
 # or add "dsh-tip-jar" to the profile's dsh.profile.bundles (the package's
@@ -7,15 +7,15 @@
 # roots: deployment-local registry locations. The package default is the
 # portable relative 'sponsors.json' (workspace root); this row pins the
 # absolute path for THIS deployment so the registry loads regardless of the
-# fs service cwd. stats 的绝对候选指向 DSH 数据目录
-# （配合 profile 层 sandbox-policy workspaceRoot 覆盖，见 profile cordis.patch.yml）。
-- insert:
+# fs service cwd. stats 鐨勭粷瀵瑰€欓€夋寚鍚?DSH 鏁版嵁鐩綍
+# 锛堥厤鍚?profile 灞?sandbox-policy workspaceRoot 瑕嗙洊锛岃 profile cordis.patch.yml锛夈€?- insert:
     - id: dsh-tip-jar
       name: 'dsh-tip-jar'
       config:
         roots:
-          - 'sponsors.json'
+          - 'D:/tool/dsh_data/sponsors.json'
           - 'D:/tool/claude_code/sponsors.json'
         statsFiles:
           - 'D:/tool/dsh_data/.tip-jar-stats.json'
           - '.tip-jar-stats.json'
+
