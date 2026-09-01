@@ -274,9 +274,7 @@ function SponsorCenter(props) {
     h('div', { className: 'sps-title' }, '🤝 支持贡献者'),
     cards,
     wall,
-    sponsorSec,
-    // G3 免责声明（R5①）：平台不代收、不托管、不担保（简短）
-    h('div', { className: 'sps-note' }, '纯 P2P 直连 · 平台不代收、不担保'))
+    sponsorSec)
 }
 
 // ── ToolCard ────────────────────────────────────────────────────────────────
