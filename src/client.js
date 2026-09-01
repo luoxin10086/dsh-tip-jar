@@ -88,6 +88,7 @@ function SponsorCenter(props) {
   const ctx = props.ctx
   const [state, setState] = useState(null)
   const [tipState, setTipState] = useState({ stats: null, present: false, paused: false })
+  const [copiedId, setCopiedId] = useState(null)
   const dataRef = useRef(null)
   const tipRef = useRef({ stats: null, present: false })
 
@@ -196,13 +197,24 @@ function SponsorCenter(props) {
     }
     if (addr) {
       const short = addr.slice(0, 6) + '…' + addr.slice(-4)
-      const copyBtn = h('button', { className: 'sps-btn', onClick: function () {
-        try {
-          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(addr).catch(function () {})
-          }
-        } catch (e) { /* fallback: select manually */ }
-      } }, '复制')
+      const isCopied = copiedId === c.id
+      const copyBtn = h('button', {
+        className: 'sps-btn',
+        title: isCopied ? '已复制 ✓' : '复制地址',
+        onClick: function () {
+          try {
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(addr).catch(function () {})
+            }
+          } catch (e) { /* fallback: select manually */ }
+          setCopiedId(c.id)
+          setTimeout(function () { setCopiedId(null) }, 1500)
+        },
+      }, isCopied
+        ? h('span', { style: { color: 'var(--dsw-alias-state-success-primary)' } }, '✓')
+        : h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+            h('rect', { x: 9, y: 9, width: 13, height: 13, rx: 2, ry: 2 }),
+            h('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' })))
       const addrRow = h('div', { className: 'sps-addr-row' },
         h('span', { className: 'sps-label' }, 'USDC (Polygon)'),
         h('input', { className: 'sps-addr', readOnly: true, defaultValue: addr, title: '点击全选后 Ctrl+C 复制', onFocus: function (e) { e.target.select() } }),
